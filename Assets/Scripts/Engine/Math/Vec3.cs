@@ -24,7 +24,7 @@ public class Vec3
 
     public int ToVoxelOffset()
     {
-        return (x << 8) + (y << 4) + z;
+        return (x << 8) | (y << 4) | z;
     }
 
 	public void set(int x, int y, int z)

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-public class ChunkMeshBuilder
+public class MeshBuilder
 {
     private static readonly float[][] NORMALS =
     {
@@ -16,20 +16,20 @@ public class ChunkMeshBuilder
     class Data
     {
         public readonly byte side;
-        public readonly short type;
+        public readonly ushort type;
         public readonly List<float> buffer = new List<float>();
 
-        public Data(byte side, short type) { this.side = side; this.type = type; }
+        public Data(byte side, ushort type) { this.side = side; this.type = type; }
     }
 
-    private List<Data> dataList;
+    private List<Data> dataList = new List<Data>();
 
-    private Data Get(short type, byte side)
+    private Data Get(ushort type, byte side)
     {
         return dataList.Find((d) => d.side == side && d.type == type);
     }
 
-    private Data SafeGet(short type, byte side)
+    private Data SafeGet(ushort type, byte side)
     {
         var data = Get(type, side);
 
@@ -42,13 +42,13 @@ public class ChunkMeshBuilder
         return data;
     }
 
-    public void Add(short type, byte side, float[] buffer)
+    public void Add(ushort type, byte side, float[] buffer)
     {
         var data = SafeGet(type, side);
         data.buffer.AddRange(buffer);
     }
 
-    private int GetPositionCount()
+    private int GetPositionFloatCount()
     {
         int cnt = 0;
 
@@ -57,26 +57,54 @@ public class ChunkMeshBuilder
         return cnt;
     }
 
-    public float[] GetPositions()
+    private int GetPositionCount()
     {
-        List<float> result = new List<float>(GetPositionCount());
-        dataList.ForEach((d) => result.AddRange(d.buffer));
-        return result.ToArray();
+        return GetPositionFloatCount() / 3;
     }
 
-    public float[] GetNormals()
+    private void ParseFloatBuffer(List<Vector3> output, List<float> input)
     {
-        List<float> result = new List<float>(GetPositionCount());
-        dataList.ForEach((d) => result.AddRange(NORMALS[d.side]));
-        return result.ToArray();
+        Debug.Assert(input.Count % 3 == 0);
+
+        for (int i = 0; i < input.Count; i += 3)
+            output.Add(new Vector3(input[i], input[i + 1], input[i + 2]));
+
     }
 
-    public int[] GetIndexes()
+    private void ParseFloatBuffer(List<Vector3> output, float[] input)
+    {
+        Debug.Assert(input.Length % 3 == 0);
+
+        for (int i = 0; i < input.Length; i += 3)
+            output.Add(new Vector3(input[i], input[i + 1], input[i + 2]));
+
+    }
+
+    public List<Vector3> GetPositions()
+    {
+        List<Vector3> result = new List<Vector3>(GetPositionCount());
+        dataList.ForEach((d) => ParseFloatBuffer(result, d.buffer));
+        return result;
+    }
+
+    public List<Vector3> GetNormals()
+    {
+        List<Vector3> result = new List<Vector3>(GetPositionCount());
+        dataList.ForEach((d) =>
+        {
+            //For each vertex, add a normal to the givin side.
+            for (int i = 0; i < d.buffer.Count; i += 3)
+                ParseFloatBuffer(result, NORMALS[d.side]);
+        });
+        return result;
+    }
+
+    public int[] GetIndices()
     {
         //Each side has 4 vertex, with 3 floats each which makes 12 floats.
         //We need 6 index for each side, so need the half size.
-        int indexCount = (int)(GetPositionCount() / 2);
-        List<int> result = new List<int>(indexCount);
+        int indexCount = (int)(GetPositionFloatCount() / 2);
+        int[] result = new int[indexCount];
 
         int n = 0;
         /*  Vertexes are built using the counter-clockwise, we just need to follow this index pattern:
@@ -90,7 +118,7 @@ public class ChunkMeshBuilder
          *		    0    0	        1
          */
 
-        for (int i = 0; i < indexCount; i++)
+        for (int i = 0; i < indexCount;)
         {
             result[i++] = n; //0
             result[i++] = n + 1; //1
@@ -102,24 +130,24 @@ public class ChunkMeshBuilder
             n += 4;
         }
 
-        return result.ToArray();
+        return result;
     }
 
-	public float[] GetUVs()
-	{
-		//A vertex is made of 3 floats.
-		int vertexCount = (int)(GetPositionCount() /3);
-		List<float> result = new List<float>(vertexCount);
+    public List<Vector2> GetUVs()
+    {
+        //A vertex is made of 3 floats.
+        List<Vector2> result = new List<Vector2>(GetPositionCount());
 
-		        float x1, y1, z1;
+        float x1, y1, z1;
         float x2, y2, z2;
         float x4, y4, z4;
 
         float xTile;
         float yTile;
-        int j = 0;
-        foreach (Data data in dataList) {
-            for (int i = 0, size = data.buffer.Count; i < size;) {
+        foreach (Data data in dataList)
+        {
+            for (int i = 0, j = 0, size = data.buffer.Count; i < size; j += 8)
+            {
                 x1 = data.buffer[i++];
                 y1 = data.buffer[i++];
                 z1 = data.buffer[i++];
@@ -135,20 +163,16 @@ public class ChunkMeshBuilder
                 y4 = data.buffer[i++];
                 z4 = data.buffer[i++];
 
-				xTile = Mathf.Abs(x1 - x2) + Mathf.Abs(y1 - y2) + Mathf.Abs(z1 - z2);
+                xTile = Mathf.Abs(x1 - x2) + Mathf.Abs(y1 - y2) + Mathf.Abs(z1 - z2);
                 yTile = Mathf.Abs(x1 - x4) + Mathf.Abs(y1 - y4) + Mathf.Abs(z1 - z4);
 
-                result[j++] = xTile;
-                result[j++] = 0f;
-                result[j++] = 0f;
-                result[j++] = 0f;
-                result[j++] = 0f;
-                result[j++] = yTile;
-                result[j++] = xTile;
-                result[j++] = yTile;
+                result.Add(new Vector2(xTile, 0f));
+                result.Add(new Vector2(0f, 0f));
+                result.Add(new Vector2(0f, yTile));
+                result.Add(new Vector2(xTile, yTile));
             }
         }
 
-		return result.ToArray();
-	}
+        return result;
+    }
 }
