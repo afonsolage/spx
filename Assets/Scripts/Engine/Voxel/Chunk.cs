@@ -32,12 +32,14 @@ public class Chunk : MonoBehaviour
     public IEnumerator Setup()
     {
         this.buffer.Allocate();
+        var noise = new SimplexNoiseGenerator();
         VoxRef voxRef = new VoxRef(this.buffer);
-        for (int x = 5; x < SIZE; x++)
+        for (int x = 0; x < SIZE; x++)
         {
-            for (int y = 0; y < SIZE - 5; y++)
+            for (int z = 0; z < SIZE; z++)
             {
-                for (int z = 0; z < SIZE; z++)
+                float height = (noise.coherentNoise(x, 0, z, SIZE) + 1);
+                for (int y = 0; y < height; y++)
                 {
                     voxRef.Target(x, y, z);
                     voxRef.type = 1; // TODO: Add types
@@ -106,12 +108,12 @@ public class Chunk : MonoBehaviour
         mesh.SetUVs(0, builder.GetUVs());
         mesh.SetUVs(1, builder.getTileUVs());
         mesh.SetColors(builder.getColors());
-        
+
         var subMeshIndices = builder.GetIndices();
         mesh.subMeshCount = subMeshIndices.Count;
         var materials = new Material[mesh.subMeshCount];
 
-        for(int i = 0; i < mesh.subMeshCount; i++)
+        for (int i = 0; i < mesh.subMeshCount; i++)
         {
             mesh.SetIndices(subMeshIndices[i], MeshTopology.Triangles, i);
             materials[i] = matDiff;
