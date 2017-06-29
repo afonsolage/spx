@@ -7,7 +7,8 @@
 	}
 	SubShader
 	{
-		Tags { "RenderType"="Opaque" }
+		Tags { "RenderType"="Opaque" "LightMode"="ForwardBase" }
+
 		LOD 100
 
 		Pass
@@ -18,6 +19,7 @@
 			#pragma multi_compile_fog
 			
 			#include "UnityCG.cginc"
+ 			#include "UnityLightingCommon.cginc"
 
 			struct voxelData
 			{
@@ -43,7 +45,14 @@
 				fragData o;
 				o.pos = UnityObjectToClipPos(v.vertex);
 				o.textCoord = (_TileSize * v.tileCoord) + (v.textCoord * _TileSize);
-				o.color = v.color; //ShadeVertexLights(v.vertex, v.normal) * v.color;
+				
+				// get vertex normal in world space
+				half3 worldNormal = UnityObjectToWorldNormal(v.normal);
+				// dot product between normal and light direction for
+                // standard diffuse (Lambert) lighting
+				half nl = max(0, dot(worldNormal, _WorldSpaceLightPos0.xyz));
+				// factor in the light color
+				o.color = v.color * nl * _LightColor0;
 
 				return o;
 			}
