@@ -16,7 +16,7 @@ public class Chunk : MonoBehaviour
         //this.pos = new Vec3(transform.position);
         this.buffer = new ChunkBuffer();
         this.filter = GetComponent<MeshFilter>();
-
+        
         StartCoroutine(Setup());
     }
 
@@ -97,6 +97,8 @@ public class Chunk : MonoBehaviour
         mesh.SetIndices(builder.GetIndices(), MeshTopology.Triangles, 0);
         mesh.SetNormals(builder.GetNormals());
         mesh.SetUVs(0, builder.GetUVs());
+        mesh.SetUVs(1, builder.getTileUVs());
+        mesh.SetColors(builder.getColors());
 
         filter.mesh = mesh;
     }

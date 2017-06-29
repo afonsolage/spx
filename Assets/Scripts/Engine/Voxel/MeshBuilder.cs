@@ -175,4 +175,37 @@ public class MeshBuilder
 
         return result;
     }
+
+    public List<Vector2> getTileUVs()
+    {
+        //A vertex is made of 3 floats.
+        List<Vector2> result = new List<Vector2>(GetPositionCount());
+
+        foreach (Data data in dataList)
+        {
+            for (int i = 0, size = data.buffer.Count; i < size;)
+            {
+                result.Add(new Vector2(0.0f, 1.0f)); //TODO: Add tiling conf on proper place.
+                i += 3;
+            }
+        }
+
+        return result;
+    }
+
+    public List<Color> getColors()
+    {
+        List<Color> result = new List<Color>(GetPositionCount());
+
+        foreach (Data data in dataList)
+        {
+            for (int i = 0, size = data.buffer.Count; i < size;)
+            {
+                result.Add(Color.white); //TODO: Add tiling conf on proper place.
+                i += 3;
+            }
+        }
+
+        return result;
+    }
 }

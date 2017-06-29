@@ -6,10 +6,8 @@ public class Root : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		GameObject go = new GameObject("Chunk Test");
-		go.AddComponent<MeshFilter>();
-		go.AddComponent<MeshRenderer>();
-		go.AddComponent<Chunk>();
+		GameObject prefab = Resources.Load("Prefab/Controller/VoxelController") as GameObject;
+		Instantiate(prefab);
 	}
 	
 	// Update is called once per frame
