@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class VoxelController : MonoBehaviour
 {
-    public Material VoxelDiffuse;
+    public Material voxelDiffuse;
 
     public void Start()
     {
@@ -12,8 +12,8 @@ public class VoxelController : MonoBehaviour
 		
         GameObject go = new GameObject("Chunk Test");
         go.AddComponent<MeshFilter>();
-        go.AddComponent<MeshRenderer>().materials = new Material[] { VoxelDiffuse };
-        go.AddComponent<Chunk>();
+        go.AddComponent<MeshRenderer>();
+        go.AddComponent<Chunk>().SetDiffuseMaterial(voxelDiffuse);
 
 		go.transform.parent = transform;
     }

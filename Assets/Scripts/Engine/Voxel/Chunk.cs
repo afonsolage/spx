@@ -10,14 +10,23 @@ public class Chunk : MonoBehaviour
     // private Vec3 pos;
     private ChunkBuffer buffer;
     private MeshFilter filter;
+    private Renderer meshRenderer;
+
+    private Material matDiff;
 
     void Start()
     {
         //this.pos = new Vec3(transform.position);
         this.buffer = new ChunkBuffer();
         this.filter = GetComponent<MeshFilter>();
-        
+        this.meshRenderer = GetComponent<MeshRenderer>();
+
         StartCoroutine(Setup());
+    }
+
+    public void SetDiffuseMaterial(Material mat)
+    {
+        this.matDiff = mat;
     }
 
     public IEnumerator Setup()
@@ -92,14 +101,23 @@ public class Chunk : MonoBehaviour
 
         Mesh mesh = new Mesh();
         mesh.name = "Chunk Mesh";
-        mesh.subMeshCount = 1;
         mesh.SetVertices(builder.GetPositions());
-        mesh.SetIndices(builder.GetIndices(), MeshTopology.Triangles, 0);
         mesh.SetNormals(builder.GetNormals());
         mesh.SetUVs(0, builder.GetUVs());
         mesh.SetUVs(1, builder.getTileUVs());
         mesh.SetColors(builder.getColors());
+        
+        var subMeshIndices = builder.GetIndices();
+        mesh.subMeshCount = subMeshIndices.Count;
+        var materials = new Material[mesh.subMeshCount];
 
+        for(int i = 0; i < mesh.subMeshCount; i++)
+        {
+            mesh.SetIndices(subMeshIndices[i], MeshTopology.Triangles, i);
+            materials[i] = matDiff;
+        }
+
+        meshRenderer.materials = materials;
         filter.mesh = mesh;
     }
 }

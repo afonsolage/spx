@@ -20,6 +20,7 @@ public class MeshBuilder
         public readonly List<float> buffer = new List<float>();
 
         public Data(byte side, ushort type) { this.side = side; this.type = type; }
+        public int VertexCount() { return buffer.Count / 3; }
     }
 
     private List<Data> dataList = new List<Data>();
@@ -99,38 +100,43 @@ public class MeshBuilder
         return result;
     }
 
-    public int[] GetIndices()
+    public List<int[]> GetIndices()
     {
-        //Each side has 4 vertex, with 3 floats each which makes 12 floats.
-        //We need 6 index for each side, so need the half size.
-        int indexCount = (int)(GetPositionFloatCount() / 2);
-        int[] result = new int[indexCount];
+        List<int[]> subMeshesIndicies = new List<int[]>();
 
         int n = 0;
-        /*  Vertexes are built using the counter-clockwise, we just need to follow this index pattern:
-         *		     3		   2    2
-         *		     +--------+    + 
-         *		     |       /   / |
-         *		     |     /   /   |
-         *		     |   /   /     |
-         *		     | /   /	   |
-         *		     +   +---------+
-         *		    0    0	        1
-         */
-
-        for (int i = 0; i < indexCount;)
+        foreach (Data data in dataList)
         {
-            result[i++] = n; //0
-            result[i++] = n + 1; //1
-            result[i++] = n + 2; //2
-            result[i++] = n + 2;   //2
-            result[i++] = n + 3; //3
-            result[i++] = n; //0
+            //Each side has 4 vertex, with 3 floats each which makes 12 floats.
+            //We need 6 index for each side, so need the half size.
+            int[] indices = new int[data.buffer.Count / 2];
 
-            n += 4;
+            /*  Vertexes are built using the counter-clockwise, we just need to follow this index pattern:
+             *		     3		   2    2
+             *		     +--------+    + 
+             *		     |       /   / |
+             *		     |     /   /   |
+             *		     |   /   /     |
+             *		     | /   /	   |
+             *		     +   +---------+
+             *		    0    0	        1
+             */
+
+            for (int i = 0; i < indices.Length;)
+            {
+                indices[i++] = n; //0
+                indices[i++] = n + 1; //1
+                indices[i++] = n + 2; //2
+                indices[i++] = n + 2;   //2
+                indices[i++] = n + 3; //3
+                indices[i++] = n; //0
+
+                n += 4;
+            }
+            subMeshesIndicies.Add(indices);
         }
 
-        return result;
+        return subMeshesIndicies;
     }
 
     public List<Vector2> GetUVs()
