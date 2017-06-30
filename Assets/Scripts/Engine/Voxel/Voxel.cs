@@ -55,7 +55,7 @@ public class Voxel
     * BitWise check to be applied on a voxel side to check if it is visible.
     */
     public static readonly byte MASK_VISIBLE = 0x01; // 0000 0001
-    
+
     /**
     * BitWise check to be applied on a voxel side to check if it is already merged.
     */

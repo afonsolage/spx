@@ -102,7 +102,7 @@ public class VoxRefTest
 
         Assert.False(wasVisibleBefore);
         Assert.True(voxRef.IsVisible(Voxel.FRONT));
-		Assert.False(voxRef.IsVisible(Voxel.RIGHT));
+        Assert.False(voxRef.IsVisible(Voxel.RIGHT));
     }
 
     [Test]
