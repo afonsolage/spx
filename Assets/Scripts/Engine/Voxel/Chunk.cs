@@ -52,7 +52,7 @@ public class Chunk : MonoBehaviour
         yield return null;
     }
 
-    private void checkVisibleFaces()
+    private void CheckVisibleFaces()
     {
         VoxRef voxRef = new VoxRef(buffer);
         VoxRef neighborRef = new VoxRef(buffer);
@@ -82,72 +82,11 @@ public class Chunk : MonoBehaviour
         }
     }
 
-
     public void Build()
     {
-        checkVisibleFaces();
+        CheckVisibleFaces();
 
-        var builder = new MeshBuilder();
-
-        VoxRef voxRef = new VoxRef(this.buffer, new Vec3());
-        for (int x = 0; x < SIZE; x++)
-        {
-            for (int y = 0; y < SIZE; y++)
-            {
-                for (int z = 0; z < SIZE; z++)
-                {
-                    voxRef.Target(x, y, z);
-
-                    if (voxRef.type == 0)
-                        continue;
-
-                    if (voxRef.IsVisible(Voxel.FRONT))
-                    {
-                        builder.Add(voxRef.type, Voxel.FRONT, voxRef.V0());
-                        builder.Add(voxRef.type, Voxel.FRONT, voxRef.V1());
-                        builder.Add(voxRef.type, Voxel.FRONT, voxRef.V2());
-                        builder.Add(voxRef.type, Voxel.FRONT, voxRef.V3());
-                    }
-
-                    if (voxRef.IsVisible(Voxel.RIGHT))
-                    {
-                        builder.Add(voxRef.type, Voxel.RIGHT, voxRef.V1());
-                        builder.Add(voxRef.type, Voxel.RIGHT, voxRef.V5());
-                        builder.Add(voxRef.type, Voxel.RIGHT, voxRef.V6());
-                        builder.Add(voxRef.type, Voxel.RIGHT, voxRef.V2());
-                    }
-
-                    if (voxRef.IsVisible(Voxel.BACK))
-                    {
-                        builder.Add(voxRef.type, Voxel.BACK, voxRef.V5());
-                        builder.Add(voxRef.type, Voxel.BACK, voxRef.V4());
-                        builder.Add(voxRef.type, Voxel.BACK, voxRef.V7());
-                        builder.Add(voxRef.type, Voxel.BACK, voxRef.V6());
-                    }
-                    if (voxRef.IsVisible(Voxel.LEFT))
-                    {
-                        builder.Add(voxRef.type, Voxel.LEFT, voxRef.V4());
-                        builder.Add(voxRef.type, Voxel.LEFT, voxRef.V0());
-                        builder.Add(voxRef.type, Voxel.LEFT, voxRef.V3());
-                        builder.Add(voxRef.type, Voxel.LEFT, voxRef.V7());
-                    }
-                    if (voxRef.IsVisible(Voxel.TOP))
-                    {
-                        builder.Add(voxRef.type, Voxel.TOP, voxRef.V3());
-                        builder.Add(voxRef.type, Voxel.TOP, voxRef.V2());
-                        builder.Add(voxRef.type, Voxel.TOP, voxRef.V6());
-                        builder.Add(voxRef.type, Voxel.TOP, voxRef.V7());
-                    }
-                    if (voxRef.IsVisible(Voxel.DOWN))
-                    {
-                        builder.Add(voxRef.type, Voxel.DOWN, voxRef.V4());
-                        builder.Add(voxRef.type, Voxel.DOWN, voxRef.V5());
-                        builder.Add(voxRef.type, Voxel.DOWN, voxRef.V1());
-                        builder.Add(voxRef.type, Voxel.DOWN, voxRef.V0());
-                    }
-                }
-            }
-        }
+        var builder = new FacesMerger(buffer).Merge();
 
         Mesh mesh = new Mesh();
         mesh.name = "Chunk Mesh";

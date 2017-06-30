@@ -33,7 +33,8 @@
 			struct fragData
 			{
 				float4 pos: SV_POSITION;
-				float2 textCoord: TEXCOORD1;
+				float2 baseCoord: TEXCOORD0;
+				float2 tiledCoord: TEXCOORD1;
 				float3 color : COLOR;
 			};
 
@@ -44,7 +45,8 @@
 			{
 				fragData o;
 				o.pos = UnityObjectToClipPos(v.vertex);
-				o.textCoord = (_TileSize * v.tileCoord) + (v.textCoord * _TileSize);
+				o.baseCoord = v.textCoord * _TileSize;
+				o.tiledCoord = _TileSize * v.tileCoord;
 				
 				// get vertex normal in world space
 				half3 worldNormal = UnityObjectToWorldNormal(v.normal);
@@ -59,7 +61,8 @@
 			
 			float4 frag (fragData f) : SV_Target
 			{
-				float4 col = tex2D(_MainTex, f.textCoord) * float4(f.color, 1);
+				float2 coord = f.baseCoord % _TileSize;
+				float4 col = tex2D(_MainTex, f.tiledCoord + coord) * (float4(f.color, 1) + float4(0.5f, 0.5f, 0.5f, 0));
 				return col;
 			}
 			ENDCG
