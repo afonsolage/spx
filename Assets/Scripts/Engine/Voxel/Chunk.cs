@@ -33,7 +33,7 @@ public class Chunk : MonoBehaviour
     {
         this.buffer.Allocate();
         var noise = new SimplexNoiseGenerator();
-        VoxRef voxRef = new VoxRef(this.buffer);
+        VoxRef voxRef = new VoxRef(this.buffer, new Vec3());
         for (int x = 0; x < SIZE; x++)
         {
             for (int z = 0; z < SIZE; z++)
@@ -56,7 +56,7 @@ public class Chunk : MonoBehaviour
     {
         var builder = new MeshBuilder();
 
-        VoxRef voxRef = new VoxRef(this.buffer);
+        VoxRef voxRef = new VoxRef(this.buffer, new Vec3());
         for (int x = 0; x < SIZE; x++)
         {
             for (int y = 0; y < SIZE; y++)

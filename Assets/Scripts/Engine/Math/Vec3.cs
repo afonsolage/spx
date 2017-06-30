@@ -27,10 +27,10 @@ public class Vec3
         return (x << 8) | (y << 4) | z;
     }
 
-	public void set(int x, int y, int z)
-	{
-		this.x = x;
-		this.y = y;
-		this.z = z;
-	}
+    public void Set(int x, int y, int z)
+    {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
 }

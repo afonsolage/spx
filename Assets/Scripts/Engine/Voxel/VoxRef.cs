@@ -1,18 +1,26 @@
-﻿public class VoxRef
+﻿using NUnit.Framework;
+
+public class VoxRef
 {
     private ChunkBuffer buffer;
     private int offset;
-    private Vec3 pos;
+    private Vec3 pos = new Vec3();
 
     public VoxRef(ChunkBuffer buffer, Vec3 pos)
     {
-        this.buffer = buffer;
-        this.pos = pos;
+        Bind(buffer);
+        Target(pos.x, pos.y, pos.z);
     }
 
     public VoxRef(ChunkBuffer buffer)
     {
-        this.buffer = buffer;
+        Bind(buffer);
+    }
+
+    public VoxRef(ChunkBuffer buffer, int x, int y, int z)
+    {
+        Bind(buffer);
+        Target(x, y, z);
     }
 
     public void Bind(ChunkBuffer buffer)
@@ -22,10 +30,7 @@
 
     public void Target(int x, int y, int z)
     {
-        if (pos == null)
-            pos = new Vec3(x, y, z);
-        else
-            pos.set(x, y, z);
+        pos.Set(x, y, z);
 
         UpdateOffset();
     }
@@ -226,5 +231,4 @@
     {
         return new float[] { pos.x, pos.y + 1, pos.z };
     }
-
 }
