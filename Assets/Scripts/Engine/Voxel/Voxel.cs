@@ -50,4 +50,24 @@ public class Voxel
 	 * Size in bytes of Voxel data struct.
 	 */
     public static readonly int BYTE_NUM = LAST_BYTE + 1;
+
+    /**
+    * BitWise check to be applied on a voxel side to check if it is visible.
+    */
+    public static readonly byte MASK_VISIBLE = 0x01; // 0000 0001
+    
+    /**
+    * BitWise check to be applied on a voxel side to check if it is already merged.
+    */
+    public static readonly byte MASK_MERGED = 0x02; // 0000 0010
+
+    /**
+    * BitWise get light value of a voxel side.
+    */
+    public static readonly byte MASK_LIGHT = 0x3C; // 0011 1100
+
+    /**
+    * Empty Voxel Type.
+    */
+    public static readonly ushort VT_EMPTY = 0;
 }

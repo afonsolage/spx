@@ -2,6 +2,15 @@
 
 public class VoxRef
 {
+    private static readonly Vec3[] SIDES_NORMALS = {
+        Vec3.FORWARD,
+        Vec3.RIGHT,
+        Vec3.BACKWARD,
+        Vec3.LEFT,
+        Vec3.UP,
+        Vec3.BOTTOM
+    };
+
     private ChunkBuffer buffer;
     private int offset;
     private Vec3 pos = new Vec3();
@@ -35,6 +44,15 @@ public class VoxRef
         UpdateOffset();
     }
 
+    public bool TryTarget(int x, int y, int z)
+    {
+        if (x < 0 || x >= Chunk.SIZE || y < 0 || y >= Chunk.SIZE || z < 0 || z >= Chunk.SIZE)
+            return false;
+
+        Target(x, y, z);
+        return true;
+    }
+
     public void UpdateOffset()
     {
         this.offset = pos.ToVoxelOffset() * Voxel.BYTE_NUM;
@@ -51,23 +69,42 @@ public class VoxRef
             buffer.SetByte(offset, i, 0);
     }
 
+    public ushort type
+    {
+        get
+        {
+            return buffer.GetShort(offset, Voxel.TYPE);
+        }
+        set
+        {
+            buffer.SetShort(offset, Voxel.TYPE, value);
+        }
+    }
 
-	public ushort type
-	{
-		get
-		{
-			return buffer.GetShort(offset, Voxel.TYPE);	
-		}
-		set
-		{
-			buffer.SetShort(offset, Voxel.TYPE, value);
-		}
-	}
+    public bool IsVisible(byte side)
+    {
+        return buffer.IsFlagSet(offset, side, Voxel.MASK_VISIBLE);
+    }
+
+    public void SetVisible(byte side, bool visible)
+    {
+        buffer.SetFlag(offset, side, Voxel.MASK_VISIBLE, visible);
+    }
+
+    public bool IsEmpty()
+    {
+        return type == Voxel.VT_EMPTY;
+    }
+
+    public Vec3 SideDir(byte side)
+    {
+        return SIDES_NORMALS[side];
+    }
 
     /* This is the a 3D cube ASCII representation to help to understand the bellow methods.																					
 	 * 																							
 	 *      v7 +-------+ v6																			
-	 *      / |     /  |	 																	
+	 *       / |     / |	 																	
 	 *   v3 +-------+v2|																		
 	 *      |v4+-------+ v5																		
 	 *      | /     | /																			

@@ -52,8 +52,41 @@ public class Chunk : MonoBehaviour
         yield return null;
     }
 
+    private void checkVisibleFaces()
+    {
+        VoxRef voxRef = new VoxRef(buffer);
+        VoxRef neighborRef = new VoxRef(buffer);
+        for (int x = 0; x < SIZE; x++)
+        {
+            for (int y = 0; y < SIZE; y++)
+            {
+                for (int z = 0; z < SIZE; z++)
+                {
+                    voxRef.Target(x, y, z);
+
+                    if (voxRef.IsEmpty())
+                        continue;
+
+                    foreach (byte side in Voxel.ALL_SIDES)
+                    {
+                        var dir = voxRef.SideDir(side);
+                        var pos = voxRef.GetPos();
+
+                        if (!neighborRef.TryTarget(pos.x + dir.x, pos.y + dir.y, pos.z + dir.z))
+                            voxRef.SetVisible(side, true);
+                        else
+                            voxRef.SetVisible(side, neighborRef.IsEmpty());
+                    }
+                }
+            }
+        }
+    }
+
+
     public void Build()
     {
+        checkVisibleFaces();
+
         var builder = new MeshBuilder();
 
         VoxRef voxRef = new VoxRef(this.buffer, new Vec3());
@@ -68,35 +101,50 @@ public class Chunk : MonoBehaviour
                     if (voxRef.type == 0)
                         continue;
 
-                    builder.Add(voxRef.type, Voxel.FRONT, voxRef.V0());
-                    builder.Add(voxRef.type, Voxel.FRONT, voxRef.V1());
-                    builder.Add(voxRef.type, Voxel.FRONT, voxRef.V2());
-                    builder.Add(voxRef.type, Voxel.FRONT, voxRef.V3());
+                    if (voxRef.IsVisible(Voxel.FRONT))
+                    {
+                        builder.Add(voxRef.type, Voxel.FRONT, voxRef.V0());
+                        builder.Add(voxRef.type, Voxel.FRONT, voxRef.V1());
+                        builder.Add(voxRef.type, Voxel.FRONT, voxRef.V2());
+                        builder.Add(voxRef.type, Voxel.FRONT, voxRef.V3());
+                    }
 
-                    builder.Add(voxRef.type, Voxel.RIGHT, voxRef.V1());
-                    builder.Add(voxRef.type, Voxel.RIGHT, voxRef.V5());
-                    builder.Add(voxRef.type, Voxel.RIGHT, voxRef.V6());
-                    builder.Add(voxRef.type, Voxel.RIGHT, voxRef.V2());
+                    if (voxRef.IsVisible(Voxel.RIGHT))
+                    {
+                        builder.Add(voxRef.type, Voxel.RIGHT, voxRef.V1());
+                        builder.Add(voxRef.type, Voxel.RIGHT, voxRef.V5());
+                        builder.Add(voxRef.type, Voxel.RIGHT, voxRef.V6());
+                        builder.Add(voxRef.type, Voxel.RIGHT, voxRef.V2());
+                    }
 
-                    builder.Add(voxRef.type, Voxel.BACK, voxRef.V5());
-                    builder.Add(voxRef.type, Voxel.BACK, voxRef.V4());
-                    builder.Add(voxRef.type, Voxel.BACK, voxRef.V7());
-                    builder.Add(voxRef.type, Voxel.BACK, voxRef.V6());
-
-                    builder.Add(voxRef.type, Voxel.LEFT, voxRef.V4());
-                    builder.Add(voxRef.type, Voxel.LEFT, voxRef.V0());
-                    builder.Add(voxRef.type, Voxel.LEFT, voxRef.V3());
-                    builder.Add(voxRef.type, Voxel.LEFT, voxRef.V7());
-
-                    builder.Add(voxRef.type, Voxel.TOP, voxRef.V3());
-                    builder.Add(voxRef.type, Voxel.TOP, voxRef.V2());
-                    builder.Add(voxRef.type, Voxel.TOP, voxRef.V6());
-                    builder.Add(voxRef.type, Voxel.TOP, voxRef.V7());
-
-                    builder.Add(voxRef.type, Voxel.DOWN, voxRef.V4());
-                    builder.Add(voxRef.type, Voxel.DOWN, voxRef.V5());
-                    builder.Add(voxRef.type, Voxel.DOWN, voxRef.V1());
-                    builder.Add(voxRef.type, Voxel.DOWN, voxRef.V0());
+                    if (voxRef.IsVisible(Voxel.BACK))
+                    {
+                        builder.Add(voxRef.type, Voxel.BACK, voxRef.V5());
+                        builder.Add(voxRef.type, Voxel.BACK, voxRef.V4());
+                        builder.Add(voxRef.type, Voxel.BACK, voxRef.V7());
+                        builder.Add(voxRef.type, Voxel.BACK, voxRef.V6());
+                    }
+                    if (voxRef.IsVisible(Voxel.LEFT))
+                    {
+                        builder.Add(voxRef.type, Voxel.LEFT, voxRef.V4());
+                        builder.Add(voxRef.type, Voxel.LEFT, voxRef.V0());
+                        builder.Add(voxRef.type, Voxel.LEFT, voxRef.V3());
+                        builder.Add(voxRef.type, Voxel.LEFT, voxRef.V7());
+                    }
+                    if (voxRef.IsVisible(Voxel.TOP))
+                    {
+                        builder.Add(voxRef.type, Voxel.TOP, voxRef.V3());
+                        builder.Add(voxRef.type, Voxel.TOP, voxRef.V2());
+                        builder.Add(voxRef.type, Voxel.TOP, voxRef.V6());
+                        builder.Add(voxRef.type, Voxel.TOP, voxRef.V7());
+                    }
+                    if (voxRef.IsVisible(Voxel.DOWN))
+                    {
+                        builder.Add(voxRef.type, Voxel.DOWN, voxRef.V4());
+                        builder.Add(voxRef.type, Voxel.DOWN, voxRef.V5());
+                        builder.Add(voxRef.type, Voxel.DOWN, voxRef.V1());
+                        builder.Add(voxRef.type, Voxel.DOWN, voxRef.V0());
+                    }
                 }
             }
         }

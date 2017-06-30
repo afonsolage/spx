@@ -20,6 +20,23 @@
         this.voxels[voxelOffset + data] = value;
     }
 
+    public bool IsFlagSet(int voxelOffset, int data, byte flag)
+    {
+        return (GetByte(voxelOffset, data) & flag) == flag;
+    }
+
+    public void SetFlag(int voxelOffset, int data, byte flag, bool val)
+    {
+        if (val)
+        {
+            this.voxels[voxelOffset + data] |= flag;
+        }
+        else
+        {
+            this.voxels[voxelOffset + data] &= (byte)~flag;
+        }
+    }
+
     public byte GetByte(int voxelOffset, int data)
     {
         return this.voxels[voxelOffset + data];

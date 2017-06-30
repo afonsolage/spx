@@ -83,12 +83,25 @@ public class VoxRefTest
         var voxRef = new VoxRef(buffer, v);
 
         Assert.AreEqual(new float[] { 1, 1, 2 }, voxRef.V0());
-		Assert.AreEqual(new float[] { 2, 1, 2 }, voxRef.V1());
-		Assert.AreEqual(new float[] { 2, 2, 2 }, voxRef.V2());
-		Assert.AreEqual(new float[] { 1, 2, 2 }, voxRef.V3());
-		Assert.AreEqual(new float[] { 1, 1, 1 }, voxRef.V4());
-		Assert.AreEqual(new float[] { 2, 1, 1 }, voxRef.V5());
-		Assert.AreEqual(new float[] { 2, 2, 1 }, voxRef.V6());
-		Assert.AreEqual(new float[] { 1, 2, 1 }, voxRef.V7());
+        Assert.AreEqual(new float[] { 2, 1, 2 }, voxRef.V1());
+        Assert.AreEqual(new float[] { 2, 2, 2 }, voxRef.V2());
+        Assert.AreEqual(new float[] { 1, 2, 2 }, voxRef.V3());
+        Assert.AreEqual(new float[] { 1, 1, 1 }, voxRef.V4());
+        Assert.AreEqual(new float[] { 2, 1, 1 }, voxRef.V5());
+        Assert.AreEqual(new float[] { 2, 2, 1 }, voxRef.V6());
+        Assert.AreEqual(new float[] { 1, 2, 1 }, voxRef.V7());
+    }
+
+    [Test]
+    public void VisibleChangeTest()
+    {
+        var voxRef = new VoxRef(buffer, v);
+
+        var b4 = voxRef.IsVisible(Voxel.FRONT);
+        voxRef.SetVisible(Voxel.FRONT, true);
+
+        Assert.AreEqual(false, b4);
+        Assert.AreEqual(true, voxRef.IsVisible(Voxel.FRONT));
+		Assert.AreEqual(false, voxRef.IsVisible(Voxel.RIGHT));
     }
 }
