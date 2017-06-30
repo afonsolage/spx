@@ -97,11 +97,21 @@ public class VoxRefTest
     {
         var voxRef = new VoxRef(buffer, v);
 
-        var b4 = voxRef.IsVisible(Voxel.FRONT);
+        var wasVisibleBefore = voxRef.IsVisible(Voxel.FRONT);
         voxRef.SetVisible(Voxel.FRONT, true);
 
-        Assert.AreEqual(false, b4);
-        Assert.AreEqual(true, voxRef.IsVisible(Voxel.FRONT));
-		Assert.AreEqual(false, voxRef.IsVisible(Voxel.RIGHT));
+        Assert.False(wasVisibleBefore);
+        Assert.True(voxRef.IsVisible(Voxel.FRONT));
+		Assert.False(voxRef.IsVisible(Voxel.RIGHT));
+    }
+
+    [Test]
+    public void TryTargetTest()
+    {
+        var voxRef = new VoxRef(buffer, v);
+
+        Assert.True(voxRef.TryTarget(10, 15, 0));
+        Assert.False(voxRef.TryTarget(Chunk.SIZE, 15, 0));
+        Assert.False(voxRef.TryTarget(14, 15, -1));
     }
 }

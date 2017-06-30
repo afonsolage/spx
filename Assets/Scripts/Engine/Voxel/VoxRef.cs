@@ -66,29 +66,29 @@ public class VoxRef
     public void ZeroFill()
     {
         for (int i = 0; i < Voxel.BYTE_NUM; i++)
-            buffer.SetByte(offset, i, 0);
+            buffer.SetByte(offset + i, 0);
     }
 
     public ushort type
     {
         get
         {
-            return buffer.GetShort(offset, Voxel.TYPE);
+            return buffer.GetUShort(offset + Voxel.TYPE);
         }
         set
         {
-            buffer.SetShort(offset, Voxel.TYPE, value);
+            buffer.SetUShort(offset + Voxel.TYPE, value);
         }
     }
 
     public bool IsVisible(byte side)
     {
-        return buffer.IsFlagSet(offset, side, Voxel.MASK_VISIBLE);
+        return buffer.IsFlagSet(offset + side, Voxel.MASK_VISIBLE);
     }
 
     public void SetVisible(byte side, bool visible)
     {
-        buffer.SetFlag(offset, side, Voxel.MASK_VISIBLE, visible);
+        buffer.SetFlag(offset + side, Voxel.MASK_VISIBLE, visible);
     }
 
     public bool IsEmpty()

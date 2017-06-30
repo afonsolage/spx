@@ -15,41 +15,41 @@
         this.voxels = null;
     }
 
-    public void SetByte(int voxelOffset, int data, byte value)
+    public void SetByte(int offset, byte value)
     {
-        this.voxels[voxelOffset + data] = value;
+        this.voxels[offset] = value;
     }
 
-    public bool IsFlagSet(int voxelOffset, int data, byte flag)
+    public bool IsFlagSet(int offset, byte flag)
     {
-        return (GetByte(voxelOffset, data) & flag) == flag;
+        return (GetByte(offset) & flag) == flag;
     }
 
-    public void SetFlag(int voxelOffset, int data, byte flag, bool val)
+    public void SetFlag(int offset, byte flag, bool val)
     {
         if (val)
         {
-            this.voxels[voxelOffset + data] |= flag;
+            this.voxels[offset] |= flag;
         }
         else
         {
-            this.voxels[voxelOffset + data] &= (byte)~flag;
+            this.voxels[offset] &= (byte)~flag;
         }
     }
 
-    public byte GetByte(int voxelOffset, int data)
+    public byte GetByte(int offset)
     {
-        return this.voxels[voxelOffset + data];
+        return this.voxels[offset];
     }
 
-    public void SetShort(int voxelOffset, int data, ushort value)
+    public void SetUShort(int offset, ushort value)
     {
-        SetByte(voxelOffset, data, (byte)((value >> 8) & 0xFF));
-        SetByte(voxelOffset, data + 1, (byte)(value & 0xFF));
+        SetByte(offset, (byte)((value >> 8) & 0xFF));
+        SetByte(offset + 1, (byte)(value & 0xFF));
     }
 
-    public ushort GetShort(int voxelOffset, int data)
+    public ushort GetUShort(int offset)
     {
-        return (ushort)((GetByte(voxelOffset, data) << 8) | GetByte(voxelOffset, data + 1));
+        return (ushort)((GetByte(offset) << 8) | GetByte(offset + 1));
     }
 }
