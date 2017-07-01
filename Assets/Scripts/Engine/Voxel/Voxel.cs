@@ -57,14 +57,9 @@ public class Voxel
     public static readonly byte MASK_VISIBLE = 0x01; // 0000 0001
 
     /**
-    * BitWise check to be applied on a voxel side to check if it is already merged.
-    */
-    public static readonly byte MASK_MERGED = 0x02; // 0000 0010
-
-    /**
     * BitWise get light value of a voxel side.
     */
-    public static readonly byte MASK_LIGHT = 0x3C; // 0011 1100
+    public static readonly byte MASK_LIGHT = 0x1E; // 0001 1110
 
     /**
     * Empty Voxel Type.

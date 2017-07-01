@@ -62,7 +62,7 @@
 			float4 frag (fragData f) : SV_Target
 			{
 				float2 coord = f.baseCoord % _TileSize;
-				float4 col = tex2D(_MainTex, f.tiledCoord + coord) * (float4(f.color, 1) + float4(0.5f, 0.5f, 0.5f, 0));
+				float4 col = tex2D(_MainTex, f.tiledCoord + coord) * float4(f.color, 1);
 				return col;
 			}
 			ENDCG
