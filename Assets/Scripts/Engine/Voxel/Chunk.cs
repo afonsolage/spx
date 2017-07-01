@@ -2,26 +2,27 @@
 using System.Collections;
 
 [ExecuteInEditMode]
-[RequireComponent(typeof(MeshFilter))]
-[RequireComponent(typeof(MeshRenderer))]
 public class Chunk : MonoBehaviour
 {
     public static readonly int SIZE = 16;
 
     private Vec3 pos;
     private ChunkBuffer buffer;
-    private MeshFilter filter;
-    private Renderer meshRenderer;
 
     private Material matDiff;
+
+    private ushort voxelCount;
+
+    public bool IsEmpty()
+    {
+        return voxelCount == 0;
+    }
 
     void Start()
     {
         this.pos = new Vec3(transform.position);
         this.name = "Chunk " + pos.x + " " + pos.y + " " + pos.z;
         this.buffer = new ChunkBuffer();
-        this.filter = GetComponent<MeshFilter>();
-        this.meshRenderer = GetComponent<MeshRenderer>();
 
         StartCoroutine(Setup());
     }
@@ -35,34 +36,30 @@ public class Chunk : MonoBehaviour
     {
         this.buffer.Allocate();
         VoxRef voxRef = new VoxRef(this.buffer, new Vec3());
-
-
-        var min = 0.0f;
-        var max = 0.0f;
         var wx = pos.x;
+
         for (int x = 0; x < SIZE; x++, wx++)
         {
             var wz = pos.z;
             for (int z = 0; z < SIZE; z++, wz++)
             {
                 float height = (float)(MakeSomeNoise.Get(wx, 0, wz, 7 / 1000.0, 4, 0.4f) * SIZE);
-                if (height < min)
-                    min = height;
-                if (height > max)
-                    max = height;
-
                 var wy = pos.y;
                 for (int y = 0; wy < height; y++, wy++)
                 {
                     voxRef.Target(x, y, z);
                     voxRef.type = 1; // TODO: Add types
+
+                    //If there is at least on block on this chunk, than itsn't empty.
+                    voxelCount++;
                 }
             }
         }
 
-        Debug.Log(min + " - " + max);
-
-        Build();
+        if (!IsEmpty())
+        {
+            Build();
+        }
 
         yield return null;
     }
@@ -121,6 +118,8 @@ public class Chunk : MonoBehaviour
             materials[i] = matDiff;
         }
 
+        var filter = gameObject.AddComponent<MeshFilter>();
+        var meshRenderer = gameObject.AddComponent<MeshRenderer>();
         meshRenderer.materials = materials;
         filter.mesh = mesh;
     }

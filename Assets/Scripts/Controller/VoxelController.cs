@@ -30,8 +30,6 @@ public class VoxelController : MonoBehaviour
     {
         GameObject go = new GameObject();
         go.transform.position = new Vector3(x * Chunk.SIZE, y * Chunk.SIZE, z * Chunk.SIZE);
-        go.AddComponent<MeshFilter>();
-        go.AddComponent<MeshRenderer>();
         go.AddComponent<Chunk>().SetDiffuseMaterial(voxelDiffuse);
 
         go.transform.parent = transform;
