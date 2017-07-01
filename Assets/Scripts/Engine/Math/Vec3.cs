@@ -96,6 +96,11 @@ public class Vec3
         return new Vec3(lhs.x / rhs.x, lhs.y / rhs.y, lhs.z / rhs.z);
     }
 
+    public static Vec3 operator %(Vec3 lhs, Vec3 rhs)
+    {
+        return new Vec3(lhs.x % rhs.x, lhs.y % rhs.y, lhs.z % rhs.z);
+    }
+
     public static bool operator ==(Vec3 lhs, Vec3 rhs)
     {
         return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;
@@ -106,13 +111,19 @@ public class Vec3
         return !(lhs == rhs);
     }
 
+    public static Vec3 operator *(Vec3 lhs, int val)
+    {
+        return new Vec3(lhs.x * val, lhs.y * val, lhs.z * val);
+    }
+
+    public static Vec3 operator %(Vec3 lhs, int val)
+    {
+        return new Vec3(lhs.x % val, lhs.y % val, lhs.z % val);
+    }
+    
     public override string ToString()
     {
         return x + ", " + y + ", " + z;
     }
 
-    public static Vec3 operator *(Vec3 lhs, int val)
-    {
-        return new Vec3(lhs.x * val, lhs.y * val, lhs.z * val);
-    }
 }

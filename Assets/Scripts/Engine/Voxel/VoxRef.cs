@@ -39,8 +39,12 @@ public class VoxRef
 
     public void Target(int x, int y, int z)
     {
-        pos = new Vec3(x, y, z);
+        Target(new Vec3(x, y, z));
+    }
 
+    public void Target(Vec3 pos)
+    {
+        this.pos = pos;
         UpdateOffset();
     }
 
@@ -50,6 +54,15 @@ public class VoxRef
             return false;
 
         Target(x, y, z);
+        return true;
+    }
+
+    public bool TryTarget(Vec3 pos)
+    {
+        if (pos.x < 0 || pos.x >= Chunk.SIZE || pos.y < 0 || pos.y >= Chunk.SIZE || pos.z < 0 || pos.z >= Chunk.SIZE)
+            return false;
+
+        Target(pos);
         return true;
     }
 

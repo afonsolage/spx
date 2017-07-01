@@ -58,6 +58,12 @@ public class Chunk : MonoBehaviour
         }
     }
 
+    public bool TryGetVox(Vec3 pos, VoxRef voxRef)
+    {
+        voxRef.Bind(_buffer);
+        return voxRef.TryTarget(pos);
+    }
+
     public void Setup()
     {
         _buffer.Allocate();
@@ -109,13 +115,25 @@ public class Chunk : MonoBehaviour
 
                     foreach (byte side in Voxel.ALL_SIDES)
                     {
-                        var dir = voxRef.SideDir(side);
-                        var pos = voxRef.GetPos();
+                        var neighborPos = voxRef.SideDir(side) + voxRef.GetPos();
 
-                        if (!neighborRef.TryTarget(pos.x + dir.x, pos.y + dir.y, pos.z + dir.z))
-                            voxRef.SetVisible(side, true);
-                        else
+                        if (neighborRef.TryTarget(neighborPos))
+                        {
                             voxRef.SetVisible(side, neighborRef.IsEmpty());
+                        }
+                        else
+                        {
+                            // Chunk neighborChunk = _neighbors[side];
+
+                            // if (neighborChunk != null && !neighborChunk.IsEmpty() && neighborChunk.TryGetVox(neighborPos % Chunk.SIZE, neighborRef))
+                            // {
+                            //     voxRef.SetVisible(side, neighborRef.IsEmpty());
+                            // }
+                            // else
+                            // {
+                                voxRef.SetVisible(side, true);
+                            // }
+                        }
                     }
                 }
             }
