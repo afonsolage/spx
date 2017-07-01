@@ -1,53 +1,25 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-[ExecuteInEditMode]
-public class Chunk : MonoBehaviour
+public class Chunk
 {
     public static readonly int SIZE = 16;
 
-    private VoxelController _parent;
+    private ChunkController _controller;
     private Vec3 _pos;
     private ChunkBuffer _buffer;
 
-    public Chunk[] _neighbors;
-
-    private Material _matDiff;
+    public Vec3[] _neighbors;
 
     private ushort _voxelCount;
 
-    public bool IsEmpty()
+    public Chunk(ChunkController controller, Vec3 pos)
     {
-        return _voxelCount == 0;
-    }
-
-    public Chunk Init(VoxelController parent, Material matDiff, Vec3 pos)
-    {
-        _parent = parent;
+        _controller = controller;
         _pos = pos;
-        _matDiff = matDiff;
 
         _buffer = new ChunkBuffer();
-        _neighbors = new Chunk[Vec3.ALL_DIRECTIONS.Length];
-
-        this.name = "Chunk " + _pos;
-
-        return this;
-    }
-
-    void Start()
-    {
-        LoadNeighbors();
-        Setup();
-    }
-
-    public void LoadNeighbors()
-    {
-        int i = 0;
-        foreach (Vec3 dir in Vec3.ALL_DIRECTIONS)
-        {
-            _neighbors[i++] = _parent.GetChunk(_pos + dir * Chunk.SIZE);
-        }
+        _controller.Post(new ChunkMsg(_pos, ChunkMsg.Action.LOAD, null));
     }
 
     public Vec3 position
@@ -58,15 +30,37 @@ public class Chunk : MonoBehaviour
         }
     }
 
+    public bool IsEmpty()
+    {
+        return _voxelCount == 0;
+    }
+
     public bool TryGetVox(Vec3 pos, VoxRef voxRef)
     {
         voxRef.Bind(_buffer);
         return voxRef.TryTarget(pos);
     }
 
-    public void Setup()
+    public void Load()
     {
         _buffer.Allocate();
+
+        _neighbors = new Vec3[Vec3.ALL_DIRECTIONS.Length];
+
+        Vec3[] items = new Vec3[_neighbors.Length];
+        int i = 0;
+        foreach (Vec3 dir in Vec3.ALL_DIRECTIONS)
+        {
+            items[i++] = _pos + dir * Chunk.SIZE;
+        }
+
+        _controller.Post(_pos, ChunkMsg.Action.SETUP, null);
+    }
+
+    public void Setup()
+    {
+        bool wasEmpty = IsEmpty();
+
         VoxRef voxRef = new VoxRef(_buffer, new Vec3());
         var wx = _pos.x;
 
@@ -91,17 +85,31 @@ public class Chunk : MonoBehaviour
         if (IsEmpty())
         {
             _buffer.Free();
+
+            //If it wasn't empty before, we need detach it.
+            if (!wasEmpty)
+            {
+                _controller.Post(_pos, ChunkMsg.Action.DETACH, null);
+            }
         }
         else
         {
-            Build();
+            CheckVisibleFaces();
+            _controller.Post(_pos, ChunkMsg.Action.BUILD, null);
         }
+    }
+
+    public void Build()
+    {
+        var builder = new FacesMerger(_buffer).Merge();
+        
+        _controller.Post(_pos, ChunkMsg.Action.ATTACH, builder.PrebuildMesh());
     }
 
     private void CheckVisibleFaces()
     {
         VoxRef voxRef = new VoxRef(_buffer);
-        VoxRef neighborRef = new VoxRef(_buffer);
+        VoxRef ngborVoxRef = new VoxRef(_buffer);
         for (int x = 0; x < SIZE; x++)
         {
             for (int y = 0; y < SIZE; y++)
@@ -117,9 +125,9 @@ public class Chunk : MonoBehaviour
                     {
                         var neighborPos = voxRef.SideDir(side) + voxRef.GetPos();
 
-                        if (neighborRef.TryTarget(neighborPos))
+                        if (ngborVoxRef.TryTarget(neighborPos))
                         {
-                            voxRef.SetVisible(side, neighborRef.IsEmpty());
+                            voxRef.SetVisible(side, ngborVoxRef.IsEmpty());
                         }
                         else
                         {
@@ -131,42 +139,12 @@ public class Chunk : MonoBehaviour
                             // }
                             // else
                             // {
-                                voxRef.SetVisible(side, true);
+                            voxRef.SetVisible(side, true);
                             // }
                         }
                     }
                 }
             }
         }
-    }
-
-    public void Build()
-    {
-        CheckVisibleFaces();
-
-        var builder = new FacesMerger(_buffer).Merge();
-
-        Mesh mesh = new Mesh();
-        mesh.name = "Chunk Mesh";
-        mesh.SetVertices(builder.GetPositions());
-        mesh.SetNormals(builder.GetNormals());
-        mesh.SetUVs(0, builder.GetUVs());
-        mesh.SetUVs(1, builder.getTileUVs());
-        mesh.SetColors(builder.getColors());
-
-        var subMeshIndices = builder.GetIndices();
-        mesh.subMeshCount = subMeshIndices.Count;
-        var materials = new Material[mesh.subMeshCount];
-
-        for (int i = 0; i < mesh.subMeshCount; i++)
-        {
-            mesh.SetIndices(subMeshIndices[i], MeshTopology.Triangles, i);
-            materials[i] = _matDiff;
-        }
-
-        var filter = gameObject.AddComponent<MeshFilter>();
-        var meshRenderer = gameObject.AddComponent<MeshRenderer>();
-        meshRenderer.materials = materials;
-        filter.mesh = mesh;
     }
 }

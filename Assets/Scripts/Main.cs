@@ -6,7 +6,7 @@ public class Main : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		GameObject prefab = Resources.Load("Prefab/Controller/VoxelController") as GameObject;
+		GameObject prefab = Resources.Load("Prefab/Voxel/VoxelViewport") as GameObject;
 		Instantiate(prefab);
 	}
 	

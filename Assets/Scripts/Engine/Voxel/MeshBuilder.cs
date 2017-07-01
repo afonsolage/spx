@@ -1,6 +1,36 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
+public class PrebuiltMesh
+{
+    public List<Vector3> positions;
+    public List<Vector3> normals;
+    public List<Vector2> UVs;
+    public List<Vector2> tileUVs;
+    public List<Color> colors;
+    public List<int[]> subMeshIndices;
+
+    public Mesh ToMesh()
+    {
+        Mesh mesh = new Mesh();
+        mesh.name = "Chunk Mesh";
+        mesh.SetVertices(positions);
+        mesh.SetNormals(normals);
+        mesh.SetUVs(0, UVs);
+        mesh.SetUVs(1, tileUVs);
+        mesh.SetColors(colors);
+
+        mesh.subMeshCount = subMeshIndices.Count;
+
+        for (int i = 0; i < mesh.subMeshCount; i++)
+        {
+            mesh.SetIndices(subMeshIndices[i], MeshTopology.Triangles, i);
+        }
+
+        return mesh;
+    }
+}
+
 public class MeshBuilder
 {
     private static readonly float[][] NORMALS =
@@ -182,7 +212,7 @@ public class MeshBuilder
         return result;
     }
 
-    public List<Vector2> getTileUVs()
+    public List<Vector2> GetTileUVs()
     {
         //A vertex is made of 3 floats.
         List<Vector2> result = new List<Vector2>(GetPositionCount());
@@ -199,7 +229,7 @@ public class MeshBuilder
         return result;
     }
 
-    public List<Color> getColors()
+    public List<Color> GetColors()
     {
         List<Color> result = new List<Color>(GetPositionCount());
 
@@ -211,6 +241,20 @@ public class MeshBuilder
                 i += 3;
             }
         }
+
+        return result;
+    }
+
+    public PrebuiltMesh PrebuildMesh()
+    {
+        var result = new PrebuiltMesh();
+
+        result.positions = GetPositions();
+        result.normals = GetNormals();
+        result.UVs = GetUVs();
+        result.tileUVs = GetTileUVs();
+        result.colors = GetColors();
+        result.subMeshIndices = GetIndices();
 
         return result;
     }
