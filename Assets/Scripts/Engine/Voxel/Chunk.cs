@@ -1,13 +1,14 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+[ExecuteInEditMode]
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
 public class Chunk : MonoBehaviour
 {
     public static readonly int SIZE = 16;
 
-    // private Vec3 pos;
+    private Vec3 pos;
     private ChunkBuffer buffer;
     private MeshFilter filter;
     private Renderer meshRenderer;
@@ -16,7 +17,8 @@ public class Chunk : MonoBehaviour
 
     void Start()
     {
-        //this.pos = new Vec3(transform.position);
+        this.pos = new Vec3(transform.position);
+        this.name = "Chunk " + pos.x + " " + pos.y + " " + pos.z;
         this.buffer = new ChunkBuffer();
         this.filter = GetComponent<MeshFilter>();
         this.meshRenderer = GetComponent<MeshRenderer>();
@@ -32,20 +34,33 @@ public class Chunk : MonoBehaviour
     public IEnumerator Setup()
     {
         this.buffer.Allocate();
-        var noise = new SimplexNoiseGenerator();
         VoxRef voxRef = new VoxRef(this.buffer, new Vec3());
-        for (int x = 0; x < SIZE; x++)
+
+
+        var min = 0.0f;
+        var max = 0.0f;
+        var wx = pos.x;
+        for (int x = 0; x < SIZE; x++, wx++)
         {
-            for (int z = 0; z < SIZE; z++)
+            var wz = pos.z;
+            for (int z = 0; z < SIZE; z++, wz++)
             {
-                float height = (noise.coherentNoise(x, 0, z, SIZE) + 1);
-                for (int y = 0; y < height; y++)
+                float height = (float)(MakeSomeNoise.Get(wx, 0, wz, 7 / 1000.0, 4, 0.4f) * SIZE);
+                if (height < min)
+                    min = height;
+                if (height > max)
+                    max = height;
+
+                var wy = pos.y;
+                for (int y = 0; wy < height; y++, wy++)
                 {
                     voxRef.Target(x, y, z);
                     voxRef.type = 1; // TODO: Add types
                 }
             }
         }
+
+        Debug.Log(min + " - " + max);
 
         Build();
 
