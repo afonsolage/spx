@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 public class Vec3
 {
@@ -31,14 +33,16 @@ public class Vec3
 	 */
     public static readonly Vec3 BACKWARD = new Vec3(0, 0, -1);
 
+    public static readonly Vec3[] ALL_DIRECTIONS = new Vec3[] { FORWARD, RIGHT, BACKWARD, LEFT, UP, BOTTOM };
+
     /**
 	 * Represents a zero position (0, 0, 0)
 	 */
     public static readonly Vec3 ZERO = new Vec3(0, 0, 0);
 
-    public int x;
-    public int y;
-    public int z;
+    public readonly int x;
+    public readonly int y;
+    public readonly int z;
 
     public Vec3() { }
 
@@ -61,10 +65,54 @@ public class Vec3
         return (x << 8) | (y << 4) | z;
     }
 
-    public void Set(int x, int y, int z)
+    public override int GetHashCode()
     {
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        return unchecked((((((3 + x) << 7) + y) << 7) + z) << 7);
+    }
+
+    public override bool Equals(object obj)
+    {
+        var v = obj as Vec3;
+        return obj != null && v.x == x && v.y == y && v.z == z;
+    }
+
+    public static Vec3 operator +(Vec3 lhs, Vec3 rhs)
+    {
+        return new Vec3(lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z);
+    }
+
+    public static Vec3 operator -(Vec3 lhs, Vec3 rhs)
+    {
+        return new Vec3(lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z);
+    }
+
+    public static Vec3 operator *(Vec3 lhs, Vec3 rhs)
+    {
+        return new Vec3(lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z);
+    }
+
+    public static Vec3 operator /(Vec3 lhs, Vec3 rhs)
+    {
+        return new Vec3(lhs.x / rhs.x, lhs.y / rhs.y, lhs.z / rhs.z);
+    }
+
+    public static bool operator ==(Vec3 lhs, Vec3 rhs)
+    {
+        return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;
+    }
+
+    public static bool operator !=(Vec3 lhs, Vec3 rhs)
+    {
+        return !(lhs == rhs);
+    }
+
+    public override string ToString()
+    {
+        return x + ", " + y + ", " + z;
+    }
+
+    public static Vec3 operator *(Vec3 lhs, int val)
+    {
+        return new Vec3(lhs.x * val, lhs.y * val, lhs.z * val);
     }
 }

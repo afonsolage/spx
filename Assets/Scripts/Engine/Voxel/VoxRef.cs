@@ -39,7 +39,7 @@ public class VoxRef
 
     public void Target(int x, int y, int z)
     {
-        pos.Set(x, y, z);
+        pos = new Vec3(x, y, z);
 
         UpdateOffset();
     }
@@ -131,9 +131,14 @@ public class VoxRef
          * @oaram offset
 		 *			  Offset to place the data into the buffer.
          */
+    public static float[] V0(int x, int y, int z)
+    {
+        return new float[] { x, y, z + 1 };
+    }
+
     public float[] V0()
     {
-        return new float[] { pos.x, pos.y, pos.z + 1 };
+        return V0(pos.x, pos.y, pos.z);
     }
 
     /**
@@ -150,9 +155,14 @@ public class VoxRef
          * @oaram offset
 		 *			  Offset to place the data into the buffer.
          */
+    public static float[] V1(int x, int y, int z)
+    {
+        return new float[] { x + 1, y, z + 1 };
+    }
+
     public float[] V1()
     {
-        return new float[] { pos.x + 1, pos.y, pos.z + 1 };
+        return V1(pos.x, pos.y, pos.z);
     }
 
     /**
@@ -169,9 +179,14 @@ public class VoxRef
          * @oaram offset
 		 *			  Offset to place the data into the buffer.
          */
+    public static float[] V2(int x, int y, int z)
+    {
+        return new float[] { x + 1, y + 1, z + 1 };
+    }
+
     public float[] V2()
     {
-        return new float[] { pos.x + 1, pos.y + 1, pos.z + 1 };
+        return V2(pos.x, pos.y, pos.z);
     }
 
     /**
@@ -188,11 +203,15 @@ public class VoxRef
          * @oaram offset
 		 *			  Offset to place the data into the buffer.
          */
-    public float[] V3()
+    public static float[] V3(int x, int y, int z)
     {
-        return new float[] { pos.x, pos.y + 1, pos.z + 1 };
+        return new float[] { x, y + 1, z + 1 };
     }
 
+    public float[] V3()
+    {
+        return V3(pos.x, pos.y, pos.z);
+    }
     /**
          * Compute the v4 of a 3D cube using the given center of cube. This function doesn't check if the given buffer is valid or can hold the data.
          * 
@@ -207,9 +226,14 @@ public class VoxRef
          * @oaram offset
 		 *			  Offset to place the data into the buffer.
          */
+    public static float[] V4(int x, int y, int z)
+    {
+        return new float[] { x, y, z };
+    }
+
     public float[] V4()
     {
-        return new float[] { pos.x, pos.y, pos.z };
+        return V4(pos.x, pos.y, pos.z);
     }
 
     /**
@@ -226,9 +250,14 @@ public class VoxRef
          * @oaram offset
 		 *			  Offset to place the data into the buffer.
          */
+    public static float[] V5(int x, int y, int z)
+    {
+        return new float[] { x + 1, y, z };
+    }
+
     public float[] V5()
     {
-        return new float[] { pos.x + 1, pos.y, pos.z };
+        return V5(pos.x, pos.y, pos.z);
     }
 
     /**
@@ -245,9 +274,14 @@ public class VoxRef
          * @oaram offset
 		 *			  Offset to place the data into the buffer.
          */
+    public static float[] V6(int x, int y, int z)
+    {
+        return new float[] { x + 1, y + 1, z };
+    }
+
     public float[] V6()
     {
-        return new float[] { pos.x + 1, pos.y + 1, pos.z };
+        return V6(pos.x, pos.y, pos.z);
     }
 
     /**
@@ -264,8 +298,13 @@ public class VoxRef
          * @oaram offset
 		 *			  Offset to place the data into the buffer.
          */
+    public static float[] V7(int x, int y, int z)
+    {
+        return new float[] { x, y + 1, z };
+    }
+
     public float[] V7()
     {
-        return new float[] { pos.x, pos.y + 1, pos.z };
+        return V7(pos.x, pos.y, pos.z);
     }
 }

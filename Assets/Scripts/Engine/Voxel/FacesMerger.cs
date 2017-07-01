@@ -123,8 +123,7 @@
 					 * 
 					 *	At this moment, we reached the right most X, so set it as v1.
 					 */
-                    v.GetPos().Set(x, y, z);
-                    System.Array.Copy(v.V1(), 0, vertices, 3, 3);
+                    System.Array.Copy(VoxRef.V1(x, y, z), 0, vertices, 3, 3);
 
                     // Go one step on Y direction and repeat the previous logic.
                     while (!done)
@@ -160,10 +159,8 @@
 					 *	At this moment, we reached the right most and top most, so lets track v2 and v3.
 					 */
 
-                    v.GetPos().Set(x, y, z);
-                    System.Array.Copy(v.V2(), 0, vertices, 6, 3);
-                    v.GetPos().Set(ox, y, z);
-                    System.Array.Copy(v.V3(), 0, vertices, 9, 3);
+                    System.Array.Copy(VoxRef.V2(x, y, z), 0, vertices, 6, 3);
+                    System.Array.Copy(VoxRef.V3(ox, y, z), 0, vertices, 9, 3);
 
                     for (int a = ox; a <= x; a++)
                     {
@@ -239,8 +236,7 @@
                         // v = nv; //Set current voxel as next one, so repeat the check until end.
                     }
 
-                    v.GetPos().Set(x, y, z);
-                    System.Array.Copy(v.V4(), 0, vertices, 3, 3);
+                    System.Array.Copy(VoxRef.V4(x, y, z), 0, vertices, 3, 3);
                     while (!done)
                     {
                         if (y == Chunk.SIZE - 1)
@@ -262,10 +258,8 @@
                         }
                     }
 
-                    v.GetPos().Set(x, y, z);
-                    System.Array.Copy(v.V7(), 0, vertices, 6, 3);
-                    v.GetPos().Set(ox, y, z);
-                    System.Array.Copy(v.V6(), 0, vertices, 9, 3);
+                    System.Array.Copy(VoxRef.V7(x, y, z), 0, vertices, 6, 3);
+                    System.Array.Copy(VoxRef.V6(ox, y, z), 0, vertices, 9, 3);
 
                     for (int a = ox; a >= x; a--)
                     {
@@ -341,8 +335,7 @@
                         // v = nv; //Set current voxel as next one, so repeat the check until end.
                     }
 
-                    v.GetPos().Set(x, y, z);
-                    System.Array.Copy(v.V2(), 0, vertices, 3, 3);
+                    System.Array.Copy(VoxRef.V2(x, y, z), 0, vertices, 3, 3);
 
                     while (!done)
                     {
@@ -365,10 +358,8 @@
                         }
                     }
 
-                    v.GetPos().Set(x, y, z);
-                    System.Array.Copy(v.V6(), 0, vertices, 6, 3);
-                    v.GetPos().Set(ox, y, z);
-                    System.Array.Copy(v.V7(), 0, vertices, 9, 3);
+                    System.Array.Copy(VoxRef.V6(x, y, z), 0, vertices, 6, 3);
+                    System.Array.Copy(VoxRef.V7(ox, y, z), 0, vertices, 9, 3);
 
                     for (int a = ox; a <= x; a++)
                     {
@@ -442,8 +433,7 @@
                         }
                     }
 
-					v.GetPos().Set(x, y, z);
-                    System.Array.Copy(v.V5(), 0, vertices, 3, 3);
+					System.Array.Copy(VoxRef.V5(x, y, z), 0, vertices, 3, 3);
                     while (!done)
                     {
                         if (z == Chunk.SIZE - 1)
@@ -465,10 +455,8 @@
                         }
                     }
 
-					v.GetPos().Set(x, y, z);
-                    System.Array.Copy(v.V1(), 0, vertices, 6, 3);
-					v.GetPos().Set(ox, y, z);
-                    System.Array.Copy(v.V0(), 0, vertices, 9, 3);
+                    System.Array.Copy(VoxRef.V1(x, y, z), 0, vertices, 6, 3);
+                    System.Array.Copy(VoxRef.V0(ox, y, z), 0, vertices, 9, 3);
 
                     for (int a = ox; a <= x; a++)
                     {
@@ -544,8 +532,7 @@
                         // v = nv; //Set current voxel as next one, so repeat the check until end.
                     }
 
-					v.GetPos().Set(x, y, z);
-                    System.Array.Copy(v.V5(), 0, vertices, 3, 3);
+					System.Array.Copy(VoxRef.V5(x, y, z), 0, vertices, 3, 3);
                     while (!done)
                     {
                         if (y == Chunk.SIZE - 1)
@@ -567,10 +554,8 @@
                         }
                     }
 
-					v.GetPos().Set(x, y, z);
-                    System.Array.Copy(v.V6(), 0, vertices, 6, 3);
-					v.GetPos().Set(x, y, oz);
-                    System.Array.Copy(v.V2(), 0, vertices, 9, 3);
+					System.Array.Copy(VoxRef.V6(x, y, z), 0, vertices, 6, 3);
+					System.Array.Copy(VoxRef.V2(x, y, oz), 0, vertices, 9, 3);
 
                     for (int a = oz; a >= z; a--)
                     {
@@ -645,8 +630,7 @@
                         // v = nv; //Set current voxel as next one, so repeat the check until end.
                     }
 
-					v.GetPos().Set(x, y, z);
-                    System.Array.Copy(v.V0(), 0, vertices, 3, 3);
+					System.Array.Copy(VoxRef.V0(x, y, z), 0, vertices, 3, 3);
                     while (!done)
                     {
                         if (y == Chunk.SIZE - 1)
@@ -668,10 +652,8 @@
                         }
                     }
 
-					v.GetPos().Set(x, y, z);
-                    System.Array.Copy(v.V3(), 0, vertices, 6, 3);
-					v.GetPos().Set(x, y, oz);
-                    System.Array.Copy(v.V7(), 0, vertices, 9, 3);
+					System.Array.Copy(VoxRef.V3(x, y, z), 0, vertices, 6, 3);
+					System.Array.Copy(VoxRef.V7(x, y, oz), 0, vertices, 9, 3);
 
                     for (int a = oz; a <= z; a++)
                     {

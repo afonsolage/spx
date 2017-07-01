@@ -6,68 +6,96 @@ public class Chunk : MonoBehaviour
 {
     public static readonly int SIZE = 16;
 
-    private Vec3 pos;
-    private ChunkBuffer buffer;
+    private VoxelController _parent;
+    private Vec3 _pos;
+    private ChunkBuffer _buffer;
 
-    private Material matDiff;
+    public Chunk[] _neighbors;
 
-    private ushort voxelCount;
+    private Material _matDiff;
+
+    private ushort _voxelCount;
 
     public bool IsEmpty()
     {
-        return voxelCount == 0;
+        return _voxelCount == 0;
+    }
+
+    public Chunk Init(VoxelController parent, Material matDiff, Vec3 pos)
+    {
+        _parent = parent;
+        _pos = pos;
+        _matDiff = matDiff;
+
+        _buffer = new ChunkBuffer();
+        _neighbors = new Chunk[Vec3.ALL_DIRECTIONS.Length];
+
+        this.name = "Chunk " + _pos;
+
+        return this;
     }
 
     void Start()
     {
-        this.pos = new Vec3(transform.position);
-        this.name = "Chunk " + pos.x + " " + pos.y + " " + pos.z;
-        this.buffer = new ChunkBuffer();
-
-        StartCoroutine(Setup());
+        LoadNeighbors();
+        Setup();
     }
 
-    public void SetDiffuseMaterial(Material mat)
+    public void LoadNeighbors()
     {
-        this.matDiff = mat;
+        int i = 0;
+        foreach (Vec3 dir in Vec3.ALL_DIRECTIONS)
+        {
+            _neighbors[i++] = _parent.GetChunk(_pos + dir * Chunk.SIZE);
+        }
     }
 
-    public IEnumerator Setup()
+    public Vec3 position
     {
-        this.buffer.Allocate();
-        VoxRef voxRef = new VoxRef(this.buffer, new Vec3());
-        var wx = pos.x;
+        get
+        {
+            return _pos;
+        }
+    }
+
+    public void Setup()
+    {
+        _buffer.Allocate();
+        VoxRef voxRef = new VoxRef(_buffer, new Vec3());
+        var wx = _pos.x;
 
         for (int x = 0; x < SIZE; x++, wx++)
         {
-            var wz = pos.z;
+            var wz = _pos.z;
             for (int z = 0; z < SIZE; z++, wz++)
             {
                 float height = (float)(MakeSomeNoise.Get(wx, 0, wz, 7 / 1000.0, 4, 0.4f) * SIZE);
-                var wy = pos.y;
+                var wy = _pos.y;
                 for (int y = 0; wy < height; y++, wy++)
                 {
                     voxRef.Target(x, y, z);
                     voxRef.type = 1; // TODO: Add types
 
                     //If there is at least on block on this chunk, than itsn't empty.
-                    voxelCount++;
+                    _voxelCount++;
                 }
             }
         }
 
-        if (!IsEmpty())
+        if (IsEmpty())
+        {
+            _buffer.Free();
+        }
+        else
         {
             Build();
         }
-
-        yield return null;
     }
 
     private void CheckVisibleFaces()
     {
-        VoxRef voxRef = new VoxRef(buffer);
-        VoxRef neighborRef = new VoxRef(buffer);
+        VoxRef voxRef = new VoxRef(_buffer);
+        VoxRef neighborRef = new VoxRef(_buffer);
         for (int x = 0; x < SIZE; x++)
         {
             for (int y = 0; y < SIZE; y++)
@@ -98,7 +126,7 @@ public class Chunk : MonoBehaviour
     {
         CheckVisibleFaces();
 
-        var builder = new FacesMerger(buffer).Merge();
+        var builder = new FacesMerger(_buffer).Merge();
 
         Mesh mesh = new Mesh();
         mesh.name = "Chunk Mesh";
@@ -115,7 +143,7 @@ public class Chunk : MonoBehaviour
         for (int i = 0; i < mesh.subMeshCount; i++)
         {
             mesh.SetIndices(subMeshIndices[i], MeshTopology.Triangles, i);
-            materials[i] = matDiff;
+            materials[i] = _matDiff;
         }
 
         var filter = gameObject.AddComponent<MeshFilter>();
