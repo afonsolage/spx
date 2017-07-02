@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.UI;
 using GameObjectMap = System.Collections.Generic.Dictionary<Vec3, UnityEngine.GameObject>;
 
 [ExecuteInEditMode]
@@ -26,6 +26,18 @@ public class VoxelViewport : MonoBehaviour, IChunkMeshConsumer
     private ChunkController _controller;
     private GameObjectMap _map;
     private ConcurrentQueue<ControllerMessage> _controllerQueue;
+
+    public void OnDestroy()
+    {
+        Debug.Log("Destroying VoxelViewport");
+
+        foreach (GameObject go in _map.Values)
+        {
+            Destroy(go);
+        }
+
+        _controller.Stop();
+    }
 
     public void Start()
     {
@@ -64,12 +76,12 @@ public class VoxelViewport : MonoBehaviour, IChunkMeshConsumer
         {
             if (msg.IsAttach())
             {
-                addChunk(msg.pos, msg.mesh);
+                AddChunk(msg.pos, msg.mesh);
                 attachCnt++;
             }
             else
             {
-                removeChunk(msg.pos);
+                RemoveChunk(msg.pos);
                 detachCnt++;
             }
 
@@ -81,7 +93,7 @@ public class VoxelViewport : MonoBehaviour, IChunkMeshConsumer
         }
     }
 
-    private void addChunk(Vec3 pos, PrebuiltMesh prebuiltMesh)
+    private void AddChunk(Vec3 pos, PrebuiltMesh prebuiltMesh)
     {
         GameObject go = new GameObject("Chunk " + pos);
         go.transform.position = new Vector3(pos.x, pos.y, pos.z);
@@ -103,11 +115,10 @@ public class VoxelViewport : MonoBehaviour, IChunkMeshConsumer
         _map[pos] = go;
     }
 
-    private void removeChunk(Vec3 pos)
+    private void RemoveChunk(Vec3 pos)
     {
-        var obj = _map[pos];
-
-        if (obj)
+        GameObject obj;
+        if (_map.TryGetValue(pos, out obj))
         {
             Destroy(obj);
             _map.Remove(pos);
@@ -116,6 +127,7 @@ public class VoxelViewport : MonoBehaviour, IChunkMeshConsumer
 
     void IChunkMeshConsumer.PostAttach(Vec3 pos, PrebuiltMesh mesh)
     {
+        Debug.Assert(mesh != null);
         _controllerQueue.Enqueue(new ControllerMessage(pos, mesh));
     }
 

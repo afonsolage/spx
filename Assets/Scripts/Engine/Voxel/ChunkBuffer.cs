@@ -15,6 +15,11 @@
         this.voxels = null;
     }
 
+    public bool IsAllocated()
+    {
+        return this.voxels != null;
+    }
+
     public void SetByte(int offset, byte value)
     {
         this.voxels[offset] = value;

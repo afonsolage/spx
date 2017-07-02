@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 
 using ChunkMap = System.Collections.Generic.Dictionary<Vec3, Chunk>;
 using UnityEngine;
+using System;
 
 public interface IChunkMeshConsumer
 {
@@ -14,20 +15,22 @@ public class ChunkController
 {
     private Thread _mainThread;
     private BlockingCollection<ChunkMessage> _queue;
-    private IChunkMeshConsumer _consumer;
+    private WeakReference _consumer;
     private ChunkMap _map;
 
     private bool _running;
 
     public ChunkController(IChunkMeshConsumer consumer)
     {
-        _consumer = consumer;
+        _consumer = new WeakReference(consumer);
         _queue = new BlockingCollection<ChunkMessage>();
         _mainThread = new Thread(Run);
+        _mainThread.Name = "ChunkController";
     }
 
     public void Start()
     {
+        Debug.Log("Starting ChunkController thread.");
         _running = true;
         _map = new ChunkMap();
         _mainThread.Start();
@@ -40,7 +43,19 @@ public class ChunkController
 
     public void Stop()
     {
-        _running = false;
+        if (_running)
+        {
+            Debug.Log("Stopping ChunkController thread.");
+            _running = false;
+            _mainThread.Interrupt();
+
+            foreach (Chunk c in _map.Values)
+                c.Unload();
+
+            _map = null;
+        }
+
+        GC.Collect();
     }
 
     public void Post(ChunkMessage msg)
@@ -55,7 +70,7 @@ public class ChunkController
 
     private void Run()
     {
-        while (_running)
+        while (_running && _consumer.IsAlive)
         {
             try
             {
@@ -63,6 +78,12 @@ public class ChunkController
             }
             catch (ThreadAbortException)
             {
+                Stop();
+                return;
+            }
+            catch (ThreadInterruptedException)
+            {
+                Stop();
                 return;
             }
             catch (System.Exception e)
@@ -70,6 +91,7 @@ public class ChunkController
                 Debug.LogException(e);
             }
         }
+        Stop();
     }
 
     private void Dispatch(ChunkMessage msg)
@@ -100,7 +122,7 @@ public class ChunkController
                     else if (_map.TryGetValue(msg.pos, out dst))
                     {
                         dst.Dispatch(msg);
-                    }   
+                    }
                 }
                 break;
         }
@@ -114,11 +136,11 @@ public class ChunkController
 
     private void AttachChunk(Vec3 pos, PrebuiltMesh mesh)
     {
-        _consumer.PostAttach(pos, mesh);
+        (_consumer.Target as IChunkMeshConsumer)?.PostAttach(pos, mesh);
     }
 
     private void DetachChunk(Vec3 pos)
     {
-        _consumer.PostDetach(pos);
+        (_consumer.Target as IChunkMeshConsumer)?.PostDetach(pos);
     }
 }

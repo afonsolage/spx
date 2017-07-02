@@ -24,7 +24,7 @@ public class Chunk
 
     public static readonly int SIZE = 16;
 
-    private ChunkController _controller;
+    private WeakReference _controller;
     private Vec3 _pos;
     private ChunkBuffer _buffer;
 
@@ -36,10 +36,11 @@ public class Chunk
 
     private List<ChunkVoxCallback> _chunkVoxCBList;
     private bool _changeStageOnCBDone;
+    private bool _attached;
 
     public Chunk(ChunkController controller, Vec3 pos)
     {
-        _controller = controller;
+        _controller = new WeakReference(controller);
         _pos = pos;
         _chunkVoxCBList = new List<ChunkVoxCallback>();
         _buffer = new ChunkBuffer();
@@ -72,24 +73,31 @@ public class Chunk
         switch (_stage)
         {
             case PipelineStage.CREATED:
-                _controller.Post(_pos, ChunkAction.LOAD);
+                GetController()?.Post(_pos, ChunkAction.LOAD);
                 break;
             case PipelineStage.LOADED:
-                _controller.Post(_pos, ChunkAction.SETUP);
+                GetController()?.Post(_pos, ChunkAction.SETUP);
                 break;
             case PipelineStage.SETUP:
-                _controller.Post(_pos, ChunkAction.BUILD);
+                GetController()?.Post(_pos, ChunkAction.BUILD);
                 break;
             case PipelineStage.BUILT:
-                _controller.Post(new ChunkAttachMessage(_pos, param as PrebuiltMesh));
+                _attached = true;
+                GetController()?.Post(new ChunkAttachMessage(_pos, param as PrebuiltMesh));
                 break;
             case PipelineStage.UNLOADED:
-                _controller.Post(_pos, ChunkAction.DETACH);
+                _attached = false;
+                GetController()?.Post(_pos, ChunkAction.DETACH);
                 break;
             default:
                 Debug.LogError("Invalid pipeline stage: " + _stage);
                 break;
         }
+    }
+
+    private ChunkController GetController()
+    {
+        return _controller.Target as ChunkController;
     }
 
     public void Dispatch(ChunkMessage msg)
@@ -138,12 +146,25 @@ public class Chunk
         GotoNextStage();
     }
 
+    public void Unload()
+    {
+        if (_buffer.IsAllocated())
+            _buffer.Free();
+
+        _neighbors = null;
+        _voxelCount = 0;
+        _changeStageOnCBDone = false;
+        _chunkVoxCBList.Clear();
+        _stage = PipelineStage.UNLOADED;
+
+        if (_attached)
+            GotoNextStage();
+    }
+
     public void Setup()
     {
         if (_stage == PipelineStage.SETUP)
             return;
-
-        bool wasEmpty = IsEmpty();
 
         VoxRef voxRef = new VoxRef(_buffer, new Vec3());
         var wx = _pos.x;
@@ -165,24 +186,19 @@ public class Chunk
                 }
             }
         }
+        
         if (IsEmpty())
         {
-            _buffer.Free();
-
-            //If it wasn't empty before, we need detach it.
-            if (!wasEmpty)
-            {
-                _stage = PipelineStage.UNLOADED;
-            }
+            Unload();
         }
         else
         {
             CheckVisibleFaces();
             _stage = PipelineStage.SETUP;
-        }
 
-        if (!_changeStageOnCBDone)
-            GotoNextStage();
+            if (!_changeStageOnCBDone)
+                GotoNextStage();
+        }
     }
 
     public void Build()
@@ -207,7 +223,7 @@ public class Chunk
                 snap = voxRef.Snapshot();
         }
 
-        _controller.Post(new ChunkResVoxMessage(msg, snap));
+        GetController()?.Post(new ChunkResVoxMessage(msg, snap));
     }
 
     private void VoxResponse(ChunkResVoxMessage msg)
@@ -231,7 +247,7 @@ public class Chunk
     private void ReqChunkVox(Vec3 chunk, Vec3 pos, Action<VoxSnap> action)
     {
         _chunkVoxCBList.Add(new ChunkVoxCallback(chunk, pos, action));
-        _controller.Post(new ChunkReqVoxMessage(_pos, chunk, pos));
+        GetController()?.Post(new ChunkReqVoxMessage(_pos, chunk, pos));
     }
 
     private void CheckVisibleFaces()
