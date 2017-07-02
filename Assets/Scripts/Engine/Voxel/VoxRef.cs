@@ -85,16 +85,12 @@ public class VoxRef
 
     public bool TryTarget(int x, int y, int z)
     {
-        if (x < 0 || x >= Chunk.SIZE || y < 0 || y >= Chunk.SIZE || z < 0 || z >= Chunk.SIZE)
-            return false;
-
-        Target(x, y, z);
-        return true;
+        return TryTarget(new Vec3(x, y, z));
     }
 
     public bool IsValid()
     {
-        return pos.x < 0 || pos.x >= Chunk.SIZE || pos.y < 0 || pos.y >= Chunk.SIZE || pos.z < 0 || pos.z >= Chunk.SIZE;
+        return pos.x >= 0 && pos.x < Chunk.SIZE && pos.y >= 0 && pos.y < Chunk.SIZE && pos.z >= 0 && pos.z < Chunk.SIZE;
     }
 
     public bool TryTarget(Vec3 pos)

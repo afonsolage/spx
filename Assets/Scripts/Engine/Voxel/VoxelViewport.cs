@@ -53,6 +53,9 @@ public class VoxelViewport : MonoBehaviour, IChunkMeshConsumer
 
     public void Update()
     {
+        if (_controllerQueue == null)
+            return;
+
         int attachCnt = 0;
         int detachCnt = 0;
         ControllerMessage msg;

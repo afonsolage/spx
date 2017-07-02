@@ -57,7 +57,18 @@ public class ChunkController
     {
         while (_running)
         {
-            Dispatch(_queue.Take());
+            try
+            {
+                Dispatch(_queue.Take());
+            }
+            catch (ThreadAbortException)
+            {
+                return;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogException(e);
+            }
         }
     }
 
@@ -76,14 +87,20 @@ public class ChunkController
                 break;
             default:
                 {
+                    Chunk dst;
                     if (msg is ChunkToChunkMessage)
                     {
-                        _map[(msg as ChunkToChunkMessage).target]?.Dispatch(msg);
+                        var ctcMsg = msg as ChunkToChunkMessage;
+
+                        if (_map.TryGetValue(ctcMsg.target, out dst))
+                            dst.Dispatch(msg);
+                        else if (_map.TryGetValue(ctcMsg.pos, out dst))
+                            dst.Dispatch(ctcMsg.ToChunkNotFoundMessage());
                     }
-                    else
+                    else if (_map.TryGetValue(msg.pos, out dst))
                     {
-                        _map[msg.pos]?.Dispatch(msg);
-                    }
+                        dst.Dispatch(msg);
+                    }   
                 }
                 break;
         }

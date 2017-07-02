@@ -1,5 +1,6 @@
 public enum ChunkAction
 {
+    NONE,
     CREATE,
     LOAD,
     SETUP,
@@ -29,12 +30,22 @@ public class ChunkAttachMessage : ChunkMessage
     }
 }
 
+public class ChunkNoneMessage : ChunkMessage
+{
+    public ChunkNoneMessage(Vec3 pos) : base(pos, ChunkAction.NONE) { }
+}
+
 public class ChunkToChunkMessage : ChunkMessage
 {
     public readonly Vec3 target;
     public ChunkToChunkMessage(Vec3 pos, ChunkAction action, Vec3 target) : base(pos, action)
     {
         this.target = target;
+    }
+
+    public virtual ChunkMessage ToChunkNotFoundMessage()
+    {
+        return new ChunkNoneMessage(pos);
     }
 }
 
@@ -45,6 +56,11 @@ public class ChunkReqVoxMessage : ChunkToChunkMessage
     public ChunkReqVoxMessage(Vec3 pos, Vec3 target, Vec3 vox) : base(pos, ChunkAction.REQ_VOX, target)
     {
         this.vox = vox;
+    }
+
+    public override ChunkMessage ToChunkNotFoundMessage()
+    {
+        return new ChunkResVoxMessage(this, null);
     }
 }
 

@@ -103,12 +103,16 @@ public class Vec3
 
     public static Vec3 operator %(Vec3 lhs, Vec3 rhs)
     {
-        return new Vec3(lhs.x % rhs.x, lhs.y % rhs.y, lhs.z % rhs.z);
+        return new Vec3(Calc.Mod(lhs.x, rhs.x), Calc.Mod(lhs.y, rhs.y), Calc.Mod(lhs.z, rhs.z));
     }
 
     public static bool operator ==(Vec3 lhs, Vec3 rhs)
     {
-        return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;
+        if (object.ReferenceEquals(lhs, null))
+        {
+            return object.ReferenceEquals(rhs, null);
+        }
+        return lhs.Equals(rhs);
     }
 
     public static bool operator !=(Vec3 lhs, Vec3 rhs)
@@ -123,7 +127,7 @@ public class Vec3
 
     public static Vec3 operator %(Vec3 lhs, int val)
     {
-        return new Vec3(lhs.x % val, lhs.y % val, lhs.z % val);
+        return new Vec3(Calc.Mod(lhs.x, val), Calc.Mod(lhs.y, val), Calc.Mod(lhs.z, val));
     }
 
     public override string ToString()
