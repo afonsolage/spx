@@ -43,7 +43,7 @@ public class VoxelViewport : MonoBehaviour, IChunkMeshConsumer
             {
                 for (int z = -area.z; z <= area.z; z++)
                 {
-                    _controller.Post(new Vec3(x * Chunk.SIZE, y * Chunk.SIZE, z * Chunk.SIZE), ChunkMsg.Action.CREATE, null);
+                    _controller.Post(new Vec3(x * Chunk.SIZE, y * Chunk.SIZE, z * Chunk.SIZE), ChunkAction.CREATE);
                 }
             }
         }

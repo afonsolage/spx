@@ -1,5 +1,40 @@
 ﻿using NUnit.Framework;
 
+public class VoxSnap
+{
+    public ushort type;
+
+    private ChunkBuffer buffer;
+    private int offset;
+    private Vec3 pos;
+    private bool[] visible;
+
+    public VoxSnap(VoxRef voxRef)
+    {
+        pos = voxRef.GetPos().Clone();
+        type = voxRef.type;
+        visible = new bool[Voxel.ALL_SIDES.Length];
+
+        foreach (byte side in Voxel.ALL_SIDES)
+            visible[side] = voxRef.IsVisible(side);
+    }
+
+    public bool IsVisible(byte side)
+    {
+        return visible[side];
+    }
+
+    public bool IsEmpty()
+    {
+        return type == Voxel.VT_EMPTY;
+    }
+
+    public Vec3 GetPos()
+    {
+        return this.pos;
+    }
+}
+
 public class VoxRef
 {
     private static readonly Vec3[] SIDES_NORMALS = {
@@ -57,13 +92,15 @@ public class VoxRef
         return true;
     }
 
+    public bool IsValid()
+    {
+        return pos.x < 0 || pos.x >= Chunk.SIZE || pos.y < 0 || pos.y >= Chunk.SIZE || pos.z < 0 || pos.z >= Chunk.SIZE;
+    }
+
     public bool TryTarget(Vec3 pos)
     {
-        if (pos.x < 0 || pos.x >= Chunk.SIZE || pos.y < 0 || pos.y >= Chunk.SIZE || pos.z < 0 || pos.z >= Chunk.SIZE)
-            return false;
-
         Target(pos);
-        return true;
+        return IsValid();
     }
 
     public void UpdateOffset()
@@ -80,6 +117,11 @@ public class VoxRef
     {
         for (int i = 0; i < Voxel.BYTE_NUM; i++)
             buffer.SetByte(offset + i, 0);
+    }
+
+    public VoxRef Clone()
+    {
+        return new VoxRef(buffer, pos);
     }
 
     public ushort type
@@ -112,6 +154,11 @@ public class VoxRef
     public Vec3 SideDir(byte side)
     {
         return SIDES_NORMALS[side];
+    }
+
+    public VoxSnap Snapshot()
+    {
+        return new VoxSnap(this);
     }
 
     /* This is the a 3D cube ASCII representation to help to understand the bellow methods.																					

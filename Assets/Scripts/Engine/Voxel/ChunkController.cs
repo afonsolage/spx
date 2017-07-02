@@ -4,25 +4,6 @@ using System.Collections.Concurrent;
 using ChunkMap = System.Collections.Generic.Dictionary<Vec3, Chunk>;
 using UnityEngine;
 
-public class ChunkMsg
-{
-    public enum Action
-    {
-        CREATE,
-        LOAD,
-        SETUP,
-        BUILD,
-        ATTACH,
-        DETACH,
-    }
-
-    public readonly Vec3 pos;
-    public readonly Action action;
-    public readonly object data;
-
-    public ChunkMsg(Vec3 pos, Action action, object data) { this.pos = pos; this.action = action; this.data = data; }
-}
-
 public interface IChunkMeshConsumer
 {
     void PostAttach(Vec3 pos, PrebuiltMesh mesh);
@@ -32,7 +13,7 @@ public interface IChunkMeshConsumer
 public class ChunkController
 {
     private Thread _mainThread;
-    private BlockingCollection<ChunkMsg> _queue;
+    private BlockingCollection<ChunkMessage> _queue;
     private IChunkMeshConsumer _consumer;
     private ChunkMap _map;
 
@@ -41,7 +22,7 @@ public class ChunkController
     public ChunkController(IChunkMeshConsumer consumer)
     {
         _consumer = consumer;
-        _queue = new BlockingCollection<ChunkMsg>();
+        _queue = new BlockingCollection<ChunkMessage>();
         _mainThread = new Thread(Run);
     }
 
@@ -62,14 +43,14 @@ public class ChunkController
         _running = false;
     }
 
-    public void Post(ChunkMsg msg)
+    public void Post(ChunkMessage msg)
     {
         _queue.Add(msg);
     }
 
-    public void Post(Vec3 pos, ChunkMsg.Action action, object data)
+    public void Post(Vec3 pos, ChunkAction action)
     {
-        Post(new ChunkMsg(pos, action, data));
+        Post(new ChunkMessage(pos, action));
     }
 
     private void Run()
@@ -80,30 +61,30 @@ public class ChunkController
         }
     }
 
-    private void Dispatch(ChunkMsg msg)
+    private void Dispatch(ChunkMessage msg)
     {
         switch (msg.action)
         {
-            case ChunkMsg.Action.CREATE:
+            case ChunkAction.CREATE:
                 CreateChunk(msg.pos);
                 break;
-            case ChunkMsg.Action.LOAD:
-                LoadChunk(msg.pos);
+            case ChunkAction.ATTACH:
+                AttachChunk(msg.pos, (msg as ChunkAttachMessage)?.mesh);
                 break;
-            case ChunkMsg.Action.SETUP:
-                SetupChunk(msg.pos);
-                break;
-            case ChunkMsg.Action.BUILD:
-                BuildChunk(msg.pos);
-                break;
-            case ChunkMsg.Action.ATTACH:
-                AttachChunk(msg.pos, msg.data as PrebuiltMesh);
-                break;
-            case ChunkMsg.Action.DETACH:
+            case ChunkAction.DETACH:
                 DetachChunk(msg.pos);
                 break;
             default:
-                Debug.LogWarning("Unimplemented action: " + msg.action);
+                {
+                    if (msg is ChunkToChunkMessage)
+                    {
+                        _map[(msg as ChunkToChunkMessage).target]?.Dispatch(msg);
+                    }
+                    else
+                    {
+                        _map[msg.pos]?.Dispatch(msg);
+                    }
+                }
                 break;
         }
     }
@@ -112,21 +93,6 @@ public class ChunkController
     {
         Chunk c = new Chunk(this, pos);
         _map[pos] = c;
-    }
-
-    private void LoadChunk(Vec3 pos)
-    {
-        _map[pos]?.Load();
-    }
-
-    private void SetupChunk(Vec3 pos)
-    {
-        _map[pos]?.Setup();
-    }
-
-    private void BuildChunk(Vec3 pos)
-    {
-        _map[pos]?.Build();
     }
 
     private void AttachChunk(Vec3 pos, PrebuiltMesh mesh)

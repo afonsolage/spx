@@ -65,6 +65,11 @@ public class Vec3
         return (x << 8) | (y << 4) | z;
     }
 
+    public Vec3 Clone()
+    {
+        return new Vec3(x, y, z);
+    }
+
     public override int GetHashCode()
     {
         return unchecked((((((3 + x) << 7) + y) << 7) + z) << 7);
@@ -120,7 +125,7 @@ public class Vec3
     {
         return new Vec3(lhs.x % val, lhs.y % val, lhs.z % val);
     }
-    
+
     public override string ToString()
     {
         return x + ", " + y + ", " + z;

@@ -1,5 +1,15 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class ChunkVoxCallback
+{
+    public Vec3 chunk;
+    public Vec3 vox;
+    public Action<VoxSnap> callback;
+
+    public ChunkVoxCallback(Vec3 c, Vec3 v, Action<VoxSnap> cb) { this.chunk = c; this.vox = v; this.callback = cb; }
+}
 
 public class Chunk
 {
@@ -13,13 +23,16 @@ public class Chunk
 
     private ushort _voxelCount;
 
+    private List<ChunkVoxCallback> _chunkVoxCBList;
+
     public Chunk(ChunkController controller, Vec3 pos)
     {
         _controller = controller;
         _pos = pos;
+        _chunkVoxCBList = new List<ChunkVoxCallback>();
 
         _buffer = new ChunkBuffer();
-        _controller.Post(new ChunkMsg(_pos, ChunkMsg.Action.LOAD, null));
+        _controller.Post(new ChunkMessage(_pos, ChunkAction.LOAD));
     }
 
     public Vec3 position
@@ -41,6 +54,31 @@ public class Chunk
         return voxRef.TryTarget(pos);
     }
 
+    public void Dispatch(ChunkMessage msg)
+    {
+        switch (msg.action)
+        {
+            case ChunkAction.LOAD:
+                Load();
+                break;
+            case ChunkAction.SETUP:
+                Setup();
+                break;
+            case ChunkAction.BUILD:
+                Build();
+                break;
+            case ChunkAction.REQ_VOX:
+                VoxRequest(msg as ChunkReqVoxMessage);
+                break;
+            case ChunkAction.RES_VOX:
+                VoxResponse(msg as ChunkResVoxMessage);
+                break;
+            default:
+                Debug.LogWarning("Unsupported action received: " + msg.action);
+                break;
+        }
+    }
+
     public void Load()
     {
         _buffer.Allocate();
@@ -54,7 +92,7 @@ public class Chunk
             items[i++] = _pos + dir * Chunk.SIZE;
         }
 
-        _controller.Post(_pos, ChunkMsg.Action.SETUP, null);
+        _controller.Post(_pos, ChunkAction.SETUP);
     }
 
     public void Setup()
@@ -89,27 +127,60 @@ public class Chunk
             //If it wasn't empty before, we need detach it.
             if (!wasEmpty)
             {
-                _controller.Post(_pos, ChunkMsg.Action.DETACH, null);
+                _controller.Post(_pos, ChunkAction.DETACH);
             }
         }
         else
         {
             CheckVisibleFaces();
-            _controller.Post(_pos, ChunkMsg.Action.BUILD, null);
+            _controller.Post(_pos, ChunkAction.BUILD);
         }
     }
 
     public void Build()
     {
         var builder = new FacesMerger(_buffer).Merge();
-        
-        _controller.Post(_pos, ChunkMsg.Action.ATTACH, builder.PrebuildMesh());
+
+        _controller.Post(new ChunkAttachMessage(_pos, builder.PrebuildMesh()));
+    }
+
+    private void VoxRequest(ChunkReqVoxMessage msg)
+    {
+        var voxRef = new VoxRef(_buffer, msg.vox);
+
+        VoxSnap snap;
+        if (voxRef.IsValid())
+            snap = voxRef.Snapshot();
+        else
+            snap = null;
+
+        _controller.Post(new ChunkResVoxMessage(msg, snap));
+    }
+
+    private void VoxResponse(ChunkResVoxMessage msg)
+    {
+        var item = _chunkVoxCBList.Find(a => a.chunk == msg.pos && a.vox == msg.vox);
+
+        if (item == null)
+            return;
+
+        _chunkVoxCBList.Remove(item);
+
+        item.callback(msg.snap);
+    }
+
+    private void ReqChunkVox(Vec3 chunk, Vec3 pos, Action<VoxSnap> action)
+    {
+        _chunkVoxCBList.Add(new ChunkVoxCallback(chunk, pos, action));
+        _controller.Post(new ChunkReqVoxMessage(_pos, chunk, pos));
     }
 
     private void CheckVisibleFaces()
     {
         VoxRef voxRef = new VoxRef(_buffer);
         VoxRef ngborVoxRef = new VoxRef(_buffer);
+
+        //We won't check borders now, since we'll need the neightboor info
         for (int x = 0; x < SIZE; x++)
         {
             for (int y = 0; y < SIZE; y++)
@@ -131,16 +202,12 @@ public class Chunk
                         }
                         else
                         {
-                            // Chunk neighborChunk = _neighbors[side];
-
-                            // if (neighborChunk != null && !neighborChunk.IsEmpty() && neighborChunk.TryGetVox(neighborPos % Chunk.SIZE, neighborRef))
+                            //Create a variable here to be captured by following closure.
+                            // var closureVoxRef = voxRef.Clone();
+                            // ReqChunkVox(_neighbors[side], neighborPos % Chunk.SIZE, (snap) =>
                             // {
-                            //     voxRef.SetVisible(side, neighborRef.IsEmpty());
-                            // }
-                            // else
-                            // {
-                            voxRef.SetVisible(side, true);
-                            // }
+                            //     closureVoxRef.SetVisible(side, snap.IsEmpty());
+                            // });
                         }
                     }
                 }
