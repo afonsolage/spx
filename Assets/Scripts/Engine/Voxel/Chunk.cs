@@ -12,14 +12,47 @@ public class VoxCallback
     public VoxCallback(Vec3 v, Action<VoxSnap> cb) { this.vox = v; this.callback = cb; }
 }
 
+/*
+    +--------+
+    |  NONE  | // Default STAGE.
+    +--------+
+        |
+        V
+    +------------+
+    | INITIALIZE | // Allocate buffer and initialize others variables
+    +------------+
+        |
+        V
+    +------+
+    | LOAD | // Load all voxels types, generating it from noise algorithm or loading from somewhere
+    +------+
+        |
+        V
+    +----------------+
+    | PRE_VISIBILITY | // Get the type of all neighbor voxels, including ones from another chunks. This information is needed to next stage (VISIBILITY).
+    +----------------+
+        |
+        V
+    +------------+
+    | VISIBILITY | // Checks if the voxel is surrounded by transparent voxels and set the visibility of each side of voxel
+    +------------+
+        |
+        V
+    +--------------+
+    | PRE_SUNLIGHT |
+    +--------------+
+
+ */
+
 public class Chunk
 {
     public enum PipelineStage
     {
-        CREATED,
-        LOADED,
-        SETUP,
-        LIGHT_PREPARED,
+        CREATED,        //The first state after chunk is created
+        LOADED,         //Buffer is initialized and neighbors are setup
+        SETUP,          //Compute voxel type based on terrain generation
+                        //
+        LIGHT_PREPARED, //
         LIGHT_SMOOTHED,
         BUILT,
         UNLOADED,
