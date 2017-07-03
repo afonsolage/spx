@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 public enum ChunkAction
 {
     NONE,
@@ -56,11 +58,11 @@ public class ChunkToChunkMessage : ChunkMessage
 
 public class ChunkReqVoxMessage : ChunkToChunkMessage
 {
-    public readonly Vec3 vox;
+    public readonly List<Vec3> voxels;
 
-    public ChunkReqVoxMessage(Vec3 pos, Vec3 target, Vec3 vox) : base(pos, ChunkAction.REQ_VOX, target)
+    public ChunkReqVoxMessage(Vec3 pos, Vec3 target, List<Vec3> voxels) : base(pos, ChunkAction.REQ_VOX, target)
     {
-        this.vox = vox;
+        this.voxels = voxels;
     }
 
     public override ChunkMessage ToChunkNotFoundMessage()
@@ -71,13 +73,11 @@ public class ChunkReqVoxMessage : ChunkToChunkMessage
 
 public class ChunkResVoxMessage : ChunkToChunkMessage
 {
-    public readonly Vec3 vox;
-    public readonly VoxSnap snap;
+    public readonly List<KeyValuePair<Vec3, VoxSnap>> list;
 
-    public ChunkResVoxMessage(ChunkReqVoxMessage req, VoxSnap snap) : base(req.target, ChunkAction.RES_VOX, req.pos)
+    public ChunkResVoxMessage(ChunkReqVoxMessage req, List<KeyValuePair<Vec3, VoxSnap>> list) : base(req.target, ChunkAction.RES_VOX, req.pos)
     {
-        this.vox = req.vox;
-        this.snap = snap;
+        this.list = list;
     }
 }
 
@@ -88,13 +88,13 @@ public class ChunkReqSunlightMessage : ChunkToChunkMessage
     public override ChunkMessage ToChunkNotFoundMessage()
     {
         return new ChunkResSunlightMessage(this, null);
-    }
+    } 
 }
 
 public class ChunkResSunlightMessage : ChunkToChunkMessage
 {
     public readonly byte[,] data;
-    public ChunkResSunlightMessage(ChunkReqSunlightMessage req, byte[,] data) : base(req.target, ChunkAction.REQ_SUNLIGHT, req.pos)
+    public ChunkResSunlightMessage(ChunkReqSunlightMessage req, byte[,] data) : base(req.target, ChunkAction.RES_SUNLIGHT, req.pos)
     {
         this.data = data;
     }

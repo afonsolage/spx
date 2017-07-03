@@ -178,7 +178,7 @@ public class ChunkLighting
         _verticesLightings = new VertexLighting[Chunk.SIZE, Chunk.SIZE, Chunk.SIZE];
     }
 
-    public void SetSidesLightign(int x, int y, int z, byte[] data)
+    public void SetSidesLighting(int x, int y, int z, byte[] data)
     {
         _verticesLightings[x, y, z] = new VertexLighting(data);
     }

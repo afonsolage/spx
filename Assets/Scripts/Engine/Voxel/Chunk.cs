@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ChunkVoxCallback
+using VoxCallbackMap = System.Collections.Generic.Dictionary<Vec3, System.Collections.Generic.List<VoxCallback>>;
+
+public class VoxCallback
 {
-    public Vec3 chunk;
     public Vec3 vox;
     public Action<VoxSnap> callback;
 
-    public ChunkVoxCallback(Vec3 c, Vec3 v, Action<VoxSnap> cb) { this.chunk = c; this.vox = v; this.callback = cb; }
+    public VoxCallback(Vec3 v, Action<VoxSnap> cb) { this.vox = v; this.callback = cb; }
 }
 
 public class Chunk
@@ -36,7 +37,7 @@ public class Chunk
 
     private PipelineStage _stage;
 
-    private List<ChunkVoxCallback> _chunkVoxCBList;
+    private VoxCallbackMap _voxCBMap;
     private bool _attached;
     private ChunkLighting _lighting;
 
@@ -44,7 +45,7 @@ public class Chunk
     {
         _controller = new WeakReference(controller);
         _pos = pos;
-        _chunkVoxCBList = new List<ChunkVoxCallback>();
+        _voxCBMap = new VoxCallbackMap();
         _buffer = new ChunkBuffer();
 
         _stage = PipelineStage.CREATED;
@@ -68,6 +69,11 @@ public class Chunk
     {
         voxRef.Bind(_buffer);
         return voxRef.TryTarget(pos);
+    }
+
+    private bool CanGoNextStage()
+    {
+        return _voxCBMap.Count == 0;
     }
 
     private void GotoNextStage(object param = null)
@@ -125,7 +131,7 @@ public class Chunk
                 PrepareLight();
                 break;
             case ChunkAction.LIGHT_SMOOTH:
-                _lighting?.ComputeSmoothLighting();
+                LightSmooth();
                 break;
             case ChunkAction.BUILD:
                 Build();
@@ -146,6 +152,14 @@ public class Chunk
                 Debug.LogWarning("Unsupported action received: " + msg.action);
                 break;
         }
+    }
+
+    private void LightSmooth()
+    {
+        _lighting?.ComputeSmoothLighting();
+
+        _stage = PipelineStage.LIGHT_SMOOTHED;
+        GotoNextStage();
     }
 
     private void Load()
@@ -173,7 +187,7 @@ public class Chunk
 
         _neighbors = null;
         _voxelCount = 0;
-        _chunkVoxCBList.Clear();
+        _voxCBMap.Clear();
         _stage = PipelineStage.UNLOADED;
 
         if (_attached)
@@ -214,7 +228,7 @@ public class Chunk
         {
             CheckVisibleFaces();
             //Request sunlight info to the upper Chunk.
-            GetController()?.Post(new ChunkToChunkMessage(_pos, ChunkAction.REQ_SUNLIGHT, _neighbors[Voxel.TOP]));
+            GetController()?.Post(new ChunkReqSunlightMessage(_pos, _neighbors[Voxel.TOP]));
 
             _stage = PipelineStage.SETUP;
         }
@@ -264,6 +278,9 @@ public class Chunk
         }
 
         _stage = PipelineStage.LIGHT_PREPARED;
+
+        if (CanGoNextStage())
+            GotoNextStage();
     }
 
     private void Build()
@@ -279,30 +296,40 @@ public class Chunk
 
     private void VoxRequest(ChunkReqVoxMessage msg)
     {
-        VoxSnap snap = null;
+        List<KeyValuePair<Vec3, VoxSnap>> result = null;
 
         if (!IsEmpty())
         {
-            var voxRef = new VoxRef(_buffer, msg.vox);
-            if (voxRef.IsValid())
-                snap = voxRef.Snapshot();
+            var voxRef = new VoxRef(_buffer);
+            foreach (Vec3 v in msg.voxels)
+            {
+                if (voxRef.TryTarget(v))
+                    result.Add(new KeyValuePair<Vec3, VoxSnap>(v, voxRef.Snapshot()));
+                else
+                    result.Add(new KeyValuePair<Vec3, VoxSnap>(v, null));
+            }
         }
 
-        GetController()?.Post(new ChunkResVoxMessage(msg, snap));
+        GetController()?.Post(new ChunkResVoxMessage(msg, result));
     }
 
     private void VoxResponse(ChunkResVoxMessage msg)
     {
-        var item = _chunkVoxCBList.Find(a => a.chunk == msg.pos && a.vox == msg.vox);
-
-        if (item == null)
+        VoxCallback cb;
+        if (!_voxCBMap.TryGetValue(msg.pos, out cb))
+        {
+            Debug.LogWarning("Vox callback not found: " + msg.pos);
             return;
+        }
 
-        _chunkVoxCBList.Remove(item);
+        _voxCBMap.Remove(msg.pos);
 
-        item.callback(msg.snap);
+        foreach (KeyValuePair<Vec3, VoxSnap> pair in msg.list)
+        {
+            cb.call(pair.Key, pair.Value);
+        }
 
-        if (_chunkVoxCBList.Count == 0)
+        if (CanGoNextStage())
         {
             GotoNextStage();
         }
@@ -310,8 +337,13 @@ public class Chunk
 
     private void ReqChunkVox(Vec3 chunk, Vec3 pos, Action<VoxSnap> action)
     {
-        _chunkVoxCBList.Add(new ChunkVoxCallback(chunk, pos, action));
-        GetController()?.Post(new ChunkReqVoxMessage(_pos, chunk, pos));
+        List<VoxCallback> callbacks;
+        
+        if (!_voxCBMap.TryGetValue(chunk, out callbacks))
+        {
+            callbacks = new List<VoxCallback>();
+            _voxCBMap[chunk] = callbacks;
+        }
     }
 
     private void CheckVisibleFaces()
@@ -359,7 +391,7 @@ public class Chunk
                         }
                     }
 
-                    _lighting.SetSidesLightign(x, y, z, sideLighting);
+                    _lighting.SetSidesLighting(x, y, z, sideLighting);
                 }
             }
         }
