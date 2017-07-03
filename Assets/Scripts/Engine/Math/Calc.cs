@@ -9,4 +9,9 @@ public static class Calc
     {
         return (a % b + b) % b;
     }
+
+    public static byte Max(byte a, byte b)
+    {
+        return a > b ? a : b;
+    }
 }

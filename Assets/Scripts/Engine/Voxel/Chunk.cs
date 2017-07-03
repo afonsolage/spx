@@ -18,6 +18,8 @@ public class Chunk
         CREATED,
         LOADED,
         SETUP,
+        LIGHT_PREPARED,
+        LIGHT_SMOOTHED,
         BUILT,
         UNLOADED,
     }
@@ -35,8 +37,8 @@ public class Chunk
     private PipelineStage _stage;
 
     private List<ChunkVoxCallback> _chunkVoxCBList;
-    private bool _changeStageOnCBDone;
     private bool _attached;
+    private ChunkLighting _lighting;
 
     public Chunk(ChunkController controller, Vec3 pos)
     {
@@ -49,7 +51,7 @@ public class Chunk
         GotoNextStage();
     }
 
-    public Vec3 position
+    private Vec3 position
     {
         get
         {
@@ -57,12 +59,12 @@ public class Chunk
         }
     }
 
-    public bool IsEmpty()
+    private bool IsEmpty()
     {
         return _voxelCount == 0;
     }
 
-    public bool TryGetVox(Vec3 pos, VoxRef voxRef)
+    private bool TryGetVox(Vec3 pos, VoxRef voxRef)
     {
         voxRef.Bind(_buffer);
         return voxRef.TryTarget(pos);
@@ -79,6 +81,12 @@ public class Chunk
                 GetController()?.Post(_pos, ChunkAction.SETUP);
                 break;
             case PipelineStage.SETUP:
+                GetController()?.Post(_pos, ChunkAction.LIGHT_PREPARE);
+                break;
+            case PipelineStage.LIGHT_PREPARED:
+                GetController()?.Post(_pos, ChunkAction.LIGHT_SMOOTH);
+                break;
+            case PipelineStage.LIGHT_SMOOTHED:
                 GetController()?.Post(_pos, ChunkAction.BUILD);
                 break;
             case PipelineStage.BUILT:
@@ -113,6 +121,12 @@ public class Chunk
             case ChunkAction.SETUP:
                 Setup();
                 break;
+            case ChunkAction.LIGHT_PREPARE:
+                PrepareLight();
+                break;
+            case ChunkAction.LIGHT_SMOOTH:
+                _lighting?.ComputeSmoothLighting();
+                break;
             case ChunkAction.BUILD:
                 Build();
                 break;
@@ -122,13 +136,19 @@ public class Chunk
             case ChunkAction.RES_VOX:
                 VoxResponse(msg as ChunkResVoxMessage);
                 break;
+            case ChunkAction.REQ_SUNLIGHT:
+                SunlightRequest(msg as ChunkReqSunlightMessage);
+                break;
+            case ChunkAction.RES_SUNLIGHT:
+                SunlightResponse(msg as ChunkResSunlightMessage);
+                break;
             default:
                 Debug.LogWarning("Unsupported action received: " + msg.action);
                 break;
         }
     }
 
-    public void Load()
+    private void Load()
     {
         if (_stage == PipelineStage.LOADED)
             return;
@@ -153,7 +173,6 @@ public class Chunk
 
         _neighbors = null;
         _voxelCount = 0;
-        _changeStageOnCBDone = false;
         _chunkVoxCBList.Clear();
         _stage = PipelineStage.UNLOADED;
 
@@ -161,7 +180,7 @@ public class Chunk
             GotoNextStage();
     }
 
-    public void Setup()
+    private void Setup()
     {
         if (_stage == PipelineStage.SETUP)
             return;
@@ -186,7 +205,7 @@ public class Chunk
                 }
             }
         }
-        
+
         if (IsEmpty())
         {
             Unload();
@@ -194,14 +213,60 @@ public class Chunk
         else
         {
             CheckVisibleFaces();
-            _stage = PipelineStage.SETUP;
+            //Request sunlight info to the upper Chunk.
+            GetController()?.Post(new ChunkToChunkMessage(_pos, ChunkAction.REQ_SUNLIGHT, _neighbors[Voxel.TOP]));
 
-            if (!_changeStageOnCBDone)
-                GotoNextStage();
+            _stage = PipelineStage.SETUP;
         }
     }
 
-    public void Build()
+    private void PrepareLight()
+    {
+        VoxRef vox = new VoxRef(_buffer);
+        for (int x = 0; x < SIZE; x++)
+        {
+            for (int y = 0; y < SIZE; y++)
+            {
+                for (int z = 0; z < SIZE; z++)
+                {
+                    var pos = new Vec3(x, y, z);
+                    vox.Target(pos);
+
+                    if (vox.IsEmpty())
+                        continue;
+
+                    byte[] neighborLighting = new byte[ChunkLighting.CORNERS_DIR.Length];
+
+                    int i = 0;
+                    foreach (Vec3 dir in ChunkLighting.CORNERS_DIR)
+                    {
+                        var tgtVox = pos + dir;
+                        if (vox.TryTarget(tgtVox))
+                        {
+                            var visible = vox.IsEmpty();
+                            neighborLighting[i] = ChunkLighting.Calc(vox, visible);
+                        }
+                        else
+                        {
+                            var closureSide = i;
+                            var closureNeighborLighting = neighborLighting;
+                            ReqChunkVox(pos + (dir * SIZE), tgtVox % SIZE, (snap) =>
+                            {
+                                var visible = snap == null || snap.IsEmpty();
+                                closureNeighborLighting[closureSide] = ChunkLighting.Calc(snap, visible);
+                            });
+                        }
+                    }
+
+                    _lighting.SetNeighborLighting(x, y, z, neighborLighting);
+                }
+            }
+        }
+
+        _stage = PipelineStage.LIGHT_PREPARED;
+    }
+
+    private void Build()
     {
         if (_stage == PipelineStage.BUILT)
             return;
@@ -237,9 +302,8 @@ public class Chunk
 
         item.callback(msg.snap);
 
-        if (_changeStageOnCBDone && _chunkVoxCBList.Count == 0)
+        if (_chunkVoxCBList.Count == 0)
         {
-            _changeStageOnCBDone = false;
             GotoNextStage();
         }
     }
@@ -255,6 +319,8 @@ public class Chunk
         VoxRef voxRef = new VoxRef(_buffer);
         VoxRef ngborVoxRef = new VoxRef(_buffer);
 
+        _lighting = new ChunkLighting();
+
         //We won't check borders now, since we'll need the neightboor info
         for (int x = 0; x < SIZE; x++)
         {
@@ -267,27 +333,94 @@ public class Chunk
                     if (voxRef.IsEmpty())
                         continue;
 
+                    var sideLighting = new byte[Voxel.ALL_SIDES.Length];
                     foreach (byte side in Voxel.ALL_SIDES)
                     {
                         var neighborPos = voxRef.SideDir(side) + voxRef.GetPos();
 
                         if (ngborVoxRef.TryTarget(neighborPos))
                         {
-                            voxRef.SetVisible(side, ngborVoxRef.IsEmpty());
+                            var visible = ngborVoxRef.IsEmpty();
+                            voxRef.SetVisible(side, visible);
+                            sideLighting[side] = ChunkLighting.Calc(voxRef, visible);
                         }
                         else
                         {
                             //Create a variable here to be captured by following closure.
                             var closureVoxRef = voxRef.Clone();
+                            var closureSideLighting = sideLighting;
+                            var closureSide = side;
                             ReqChunkVox(_neighbors[side], neighborPos % Chunk.SIZE, (snap) =>
                             {
-                                closureVoxRef.SetVisible(side, snap == null || snap.IsEmpty());
+                                var visible = snap == null || snap.IsEmpty();
+                                closureVoxRef.SetVisible(side, visible);
+                                closureSideLighting[closureSide] = ChunkLighting.Calc(snap, visible);
                             });
-                            _changeStageOnCBDone = true;
                         }
+                    }
+
+                    _lighting.SetSidesLightign(x, y, z, sideLighting);
+                }
+            }
+        }
+    }
+
+    private void SunlightRequest(ChunkReqSunlightMessage msg)
+    {
+        byte[,] data = null;
+
+        if (!IsEmpty())
+        {
+            data = new byte[SIZE, SIZE];
+            VoxRef vox = new VoxRef(_buffer);
+            for (int x = 0; x < SIZE; x++)
+            {
+                for (int z = 0; z < SIZE; z++)
+                {
+                    vox.Target(x, 0, z);
+                    data[x, z] = vox.sunLight;
+                }
+            }
+        }
+
+        GetController()?.Post(new ChunkResSunlightMessage(msg, data));
+    }
+
+    private void SunlightResponse(ChunkResSunlightMessage msg)
+    {
+        var data = msg.data;
+
+        Queue<Vec3> propagationQueue = new Queue<Vec3>();
+
+        int y = Chunk.SIZE - 1;
+        VoxRef vox = new VoxRef(_buffer);
+        for (int x = 0; x < SIZE; x++)
+        {
+            for (int z = 0; z < SIZE; z++)
+            {
+                if (data == null || data[x, z] == Voxel.SUNLIGHT_MAX_VALUE)
+                {
+                    vox.Target(x, y, z);
+                    if (vox.type == Voxel.VT_EMPTY)
+                    {
+                        vox.sunLight = Voxel.SUNLIGHT_MAX_VALUE;
+                        propagationQueue.Enqueue(vox.GetPos() - Vec3.BOTTOM);
                     }
                 }
             }
         }
+
+        while (propagationQueue.Count > 0)
+        {
+            var pos = propagationQueue.Dequeue();
+
+            if (vox.TryTarget(pos) && vox.type == Voxel.VT_EMPTY)
+            {
+                vox.sunLight = Voxel.SUNLIGHT_MAX_VALUE;
+                propagationQueue.Enqueue(vox.GetPos() - Vec3.BOTTOM);
+            }
+        }
+
+        GotoNextStage();
     }
 }

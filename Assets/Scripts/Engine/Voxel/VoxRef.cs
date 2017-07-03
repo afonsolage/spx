@@ -2,9 +2,6 @@
 
 public class VoxSnap
 {
-    public ushort type;
-
-    private ChunkBuffer buffer;
     private int offset;
     private Vec3 pos;
     private bool[] visible;
@@ -13,6 +10,7 @@ public class VoxSnap
     {
         pos = voxRef.GetPos().Clone();
         type = voxRef.type;
+        _light = voxRef.GetRawLight();
         visible = new bool[Voxel.ALL_SIDES.Length];
 
         foreach (byte side in Voxel.ALL_SIDES)
@@ -32,6 +30,46 @@ public class VoxSnap
     public Vec3 GetPos()
     {
         return this.pos;
+    }
+
+    public ushort type;
+
+    private byte _light;
+    /**
+        The sun light value of current referenced voxel. Light values range from 0 to 15 (0xF)
+    */
+    public byte sunLight
+    {
+        get
+        {
+            return (byte)((_light & Voxel.LIGHT_SUN) >> Voxel.LIGHT_SUN_SHIFT);
+        }
+    }
+
+    /**
+    The normal (artificial) light value of current referenced voxel. Light values range from 0 to 15 (0xF)
+    */
+    public byte normalLight
+    {
+        get
+        {
+            return (byte)(_light & Voxel.LIGHT_NORMAL);
+        }
+    }
+
+    /**
+    * The light value (final) of current referenced voxel. This return the greater value of sun and normal light
+    */
+    public byte light
+    {
+        get
+        {
+            var sLight = sunLight;
+            if (sLight == Voxel.SUNLIGHT_MAX_VALUE)
+                return sLight;
+            else
+                return Calc.Max(sLight, normalLight);
+        }
     }
 }
 
@@ -130,6 +168,62 @@ public class VoxRef
         {
             buffer.SetUShort(offset + Voxel.TYPE, value);
         }
+    }
+
+    /**
+        The sun light value of current referenced voxel. Light values range from 0 to 15 (0xF)
+    */
+    public byte sunLight
+    {
+        get
+        {
+            return (byte)((buffer.GetByte(offset + Voxel.LIGHT) & Voxel.LIGHT_SUN) >> Voxel.LIGHT_SUN_SHIFT);
+        }
+        set
+        {
+            byte currentVal = sunLight; //Get current value
+            currentVal &= (byte)~Voxel.LIGHT_SUN; //Reset sunlight value
+            currentVal |= (byte)((value << Voxel.LIGHT_SUN_SHIFT) & Voxel.LIGHT_SUN);
+            buffer.SetByte(offset + Voxel.LIGHT, currentVal);
+        }
+    }
+
+    /**
+    The normal (artificial) light value of current referenced voxel. Light values range from 0 to 15 (0xF)
+    */
+    public byte normalLight
+    {
+        get
+        {
+            return (byte)(buffer.GetByte(offset + Voxel.LIGHT) & Voxel.LIGHT_NORMAL);
+        }
+        set
+        {
+            byte currentVal = normalLight; //Get current value
+            currentVal &= (byte)~Voxel.LIGHT_NORMAL; //Reset sunlight value
+            currentVal |= (byte)(value & Voxel.LIGHT_NORMAL);
+            buffer.SetByte(offset + Voxel.LIGHT, currentVal);
+        }
+    }
+
+    /**
+    * The light value (final) of current referenced voxel. This return the greater value of sun and normal light
+    */
+    public byte light
+    {
+        get
+        {
+            var sLight = sunLight;
+            if (sLight == Voxel.SUNLIGHT_MAX_VALUE)
+                return sLight;
+            else
+                return Calc.Max(sLight, normalLight);
+        }
+    }
+
+    public byte GetRawLight()
+    {
+        return buffer.GetByte(offset + Voxel.LIGHT);
     }
 
     public bool IsVisible(byte side)

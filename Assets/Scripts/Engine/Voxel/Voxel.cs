@@ -65,4 +65,24 @@ public class Voxel
     * Empty Voxel Type.
     */
     public static readonly ushort VT_EMPTY = 0;
+
+    /**
+    * BitWise get normal light value on a voxel.
+    */
+    public static readonly byte LIGHT_NORMAL = 0xF; // 0000 1111
+
+    /**
+    * BitWise get normal light value on a voxel.
+    */
+    public static readonly byte LIGHT_SUN = 0xF0; // 1111 0000
+
+    /**
+    * Number of bits to be shifted when reading sunlight value on a voxel.
+    */
+    public static readonly int LIGHT_SUN_SHIFT = 4;
+
+    /**
+    * Max value of sunlight on a voxel.
+    */
+    public static readonly byte SUNLIGHT_MAX_VALUE = 15;
 }

@@ -4,12 +4,17 @@ public enum ChunkAction
     CREATE,
     LOAD,
     SETUP,
+    LIGHT_PREPARE,
+    LIGHT_SMOOTH,
     BUILD,
     ATTACH,
     DETACH,
 
     REQ_VOX,
     RES_VOX,
+
+    REQ_SUNLIGHT,
+    RES_SUNLIGHT,
 }
 
 public class ChunkMessage
@@ -73,5 +78,24 @@ public class ChunkResVoxMessage : ChunkToChunkMessage
     {
         this.vox = req.vox;
         this.snap = snap;
+    }
+}
+
+public class ChunkReqSunlightMessage : ChunkToChunkMessage
+{
+    public ChunkReqSunlightMessage(Vec3 pos, Vec3 target) : base(pos, ChunkAction.REQ_SUNLIGHT, target) { }
+
+    public override ChunkMessage ToChunkNotFoundMessage()
+    {
+        return new ChunkResSunlightMessage(this, null);
+    }
+}
+
+public class ChunkResSunlightMessage : ChunkToChunkMessage
+{
+    public readonly byte[,] data;
+    public ChunkResSunlightMessage(ChunkReqSunlightMessage req, byte[,] data) : base(req.target, ChunkAction.REQ_SUNLIGHT, req.pos)
+    {
+        this.data = data;
     }
 }
