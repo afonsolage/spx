@@ -14,7 +14,7 @@ public class VoxCallback
 
 /*
     +--------+
-    |  NONE  | // Default STAGE.
+    |  NONE  | // Default stage.
     +--------+
         |
         V
@@ -38,10 +38,50 @@ public class VoxCallback
     +------------+
         |
         V
-    +--------------+
-    | PRE_SUNLIGHT |
-    +--------------+
+    +-------------+
+    | MERGE_FACES | // Merges all visible faces which shares the same light (smoothed) and type
+    +-------------+
+        |
+        V
+    +-------+
+    | READY | // Chunk is ready to be merged
+    +-------+
 
+
+    //TODO: Add later on those stages:
+    +--------------+
+    | PRE_SUNLIGHT | // Get the sunlight value comming from the upper chunk. If there is none chunk, then this one must receive sunlight directly 
+    +--------------+
+        |
+        V
+    +----------+
+    | SUNLIGHT | // Propagate the sunlight downwards with maxium value until reach a solid voxel.
+    +----------+
+        |
+        V
+    +------------------+
+    | REFLECT_SUNLIGHT | // Compute sunlight reflection from a voxel with direct sunlight to all voxels which doesn't have direct sunlight.
+    +------------------+
+        |
+        V
+    +-----------------+
+    | REMOVE_SUNLIGHT |
+    +-----------------+
+        |
+        V
+    +--------------+
+    | REMOVE_LIGHT |
+    +--------------+
+        |
+        V
+    +--------------------+
+    | PROPAGATE_SUNLIGHT |
+    +--------------------+
+        |
+        V
+    +--------------------+
+    | PROPAGATE_LIGHT    |
+    +--------------------+
  */
 
 public class Chunk
