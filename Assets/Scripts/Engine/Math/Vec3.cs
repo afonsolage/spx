@@ -4,42 +4,41 @@ using UnityEngine;
 
 public class Vec3
 {
-    /**
-    * Represents the right direction (1, 0, 0)
-    */
-    public static readonly Vec3 RIGHT = new Vec3(1, 0, 0);
-    /**
-	 * Represents the left direction (-1, 0, 0)
-	 */
-    public static readonly Vec3 LEFT = new Vec3(-1, 0, 0);
-
-    /**
-	 * Represents the up direction (0, 1, 0)
-	 */
-    public static readonly Vec3 UP = new Vec3(0, 1, 0);
-
-    /**
-	 * Represents the down direction (0, 1, 0)
-	 */
-    public static readonly Vec3 BOTTOM = new Vec3(0, -1, 0);
-
-    /**
-	 * Represents the forwards direction (0, 0, 1)
-	 */
-    public static readonly Vec3 FORWARD = new Vec3(0, 0, 1);
-
-    /**
-	 * Represents the backwards direction (0, 0, -1)
-	 */
-    public static readonly Vec3 BACKWARD = new Vec3(0, 0, -1);
-
-    public static readonly Vec3[] ALL_DIRECTIONS = new Vec3[] { FORWARD, RIGHT, BACKWARD, LEFT, UP, BOTTOM };
-
-    /**
-	 * Represents a zero position (0, 0, 0)
-	 */
     public static readonly Vec3 ZERO = new Vec3(0, 0, 0);
 
+    public static readonly Vec3 FORWARD = new Vec3(0, 0, 1);
+    public static readonly Vec3 BACKWARD = new Vec3(0, 0, -1);
+    public static readonly Vec3 RIGHT = new Vec3(1, 0, 0);
+    public static readonly Vec3 RIGHT_FORWARD = new Vec3(1, 0, 1);
+    public static readonly Vec3 RIGHT_BACKWARD = new Vec3(1, 0, -1);
+    public static readonly Vec3 RIGHT_UP = new Vec3(1, 1, 0);
+    public static readonly Vec3 RIGHT_UP_FORWARD = new Vec3(1, 1, 1);
+    public static readonly Vec3 RIGHT_UP_BACKWARD = new Vec3(1, 1, -1);
+    public static readonly Vec3 RIGHT_BOTTOM_FORWARD = new Vec3(1, -1, 1);
+    public static readonly Vec3 RIGHT_BOTTOM = new Vec3(1, -1, 0);
+    public static readonly Vec3 RIGHT_BOTTOM_BACKWARD = new Vec3(1, -1, -1);
+    public static readonly Vec3 LEFT = new Vec3(-1, 0, 0);
+    public static readonly Vec3 LEFT_FORWARD = new Vec3(-1, 0, 1);
+    public static readonly Vec3 LEFT_BACKWARD = new Vec3(-1, 0, -1);
+    public static readonly Vec3 LEFT_UP_FORWARD = new Vec3(-1, 1, 1);
+    public static readonly Vec3 LEFT_UP = new Vec3(-1, 1, 0);
+    public static readonly Vec3 LEFT_UP_BACKWARD = new Vec3(-1, 1, -1);
+    public static readonly Vec3 LEFT_BOTTOM_FORWARD = new Vec3(-1, -1, 1);
+    public static readonly Vec3 LEFT_BOTTOM = new Vec3(-1, -1, 0);
+    public static readonly Vec3 LEFT_BOTTOM_BACKWARD = new Vec3(-1, -1, -1);
+    public static readonly Vec3 UP = new Vec3(0, 1, 0);
+    public static readonly Vec3 UP_FORWARD = new Vec3(0, 1, 1);
+    public static readonly Vec3 UP_BACKWARD = new Vec3(0, 1, -1);
+    public static readonly Vec3 BOTTOM = new Vec3(0, -1, 0);
+    public static readonly Vec3 BOTTOM_FORWARD = new Vec3(0, -1, 1);
+    public static readonly Vec3 BOTTOM_BACKWARD = new Vec3(0, -1, -1);
+
+    public static readonly Vec3[] ALL_UNIT_DIRS = new Vec3[] { FORWARD, RIGHT, BACKWARD, LEFT, UP, BOTTOM };
+    public static readonly Vec3[] ALL_DIRS = new Vec3[] { FORWARD, BACKWARD, RIGHT, RIGHT_FORWARD, RIGHT_BACKWARD,
+        RIGHT_UP, RIGHT_UP_FORWARD, RIGHT_UP_BACKWARD, RIGHT_BOTTOM_FORWARD, RIGHT_BOTTOM, RIGHT_BOTTOM_BACKWARD,
+        LEFT, LEFT_FORWARD, LEFT_BACKWARD, LEFT_UP_FORWARD, LEFT_UP, LEFT_UP_BACKWARD, LEFT_BOTTOM_FORWARD, LEFT_BOTTOM,
+        LEFT_BOTTOM_BACKWARD, UP, UP_FORWARD, UP_BACKWARD, BOTTOM, BOTTOM_FORWARD, BOTTOM_BACKWARD };
+    
     public readonly int x;
     public readonly int y;
     public readonly int z;

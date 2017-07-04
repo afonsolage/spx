@@ -17,34 +17,41 @@ public class VoxCallback
     |  NONE  | // Default stage.
     +--------+
         |
+        |
         V
     +------------+
     | INITIALIZE | // Allocate buffer and initialize others variables
     +------------+
         |
+        |
         V
     +------+
     | LOAD | // Load all voxels types, generating it from noise algorithm or loading from somewhere
-    +------+
-        |
-        V
+    +------+    
+        | |         +--------+
+        | +------>  | UNLOAD | // The chunk is fully empty. Unload it.
+        |           +--------+
+        V     
     +----------------+
     | PRE_VISIBILITY | // Get the type of all neighbor voxels, including ones from another chunks. This information is needed to next stage (VISIBILITY).
     +----------------+
+        |
         |
         V
     +------------+
     | VISIBILITY | // Checks if the voxel is surrounded by transparent voxels and set the visibility of each side of voxel
     +------------+
         |
+        |
         V
     +-------------+
     | MERGE_FACES | // Merges all visible faces which shares the same light (smoothed) and type
     +-------------+
         |
+        |
         V
     +-------+
-    | READY | // Chunk is ready to be merged
+    | BUILD | // Build chunk mesh to be rendered
     +-------+
 
 
@@ -242,9 +249,9 @@ public class Chunk
 
         _buffer.Allocate();
 
-        _neighbors = new Vec3[Vec3.ALL_DIRECTIONS.Length];
+        _neighbors = new Vec3[Vec3.ALL_UNIT_DIRS.Length];
         int i = 0;
-        foreach (Vec3 dir in Vec3.ALL_DIRECTIONS)
+        foreach (Vec3 dir in Vec3.ALL_UNIT_DIRS)
         {
             _neighbors[i++] = _pos + dir * Chunk.SIZE;
         }
