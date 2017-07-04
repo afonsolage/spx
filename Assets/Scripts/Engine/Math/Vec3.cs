@@ -129,6 +129,11 @@ public class Vec3
         return new Vec3(Calc.Mod(lhs.x, val), Calc.Mod(lhs.y, val), Calc.Mod(lhs.z, val));
     }
 
+    public static Vec3 operator /(Vec3 lhs, int val)
+    {
+        return new Vec3(lhs.x / val, lhs.y / val, lhs.z / val);
+    }
+
     public override string ToString()
     {
         return x + ", " + y + ", " + z;

@@ -4,13 +4,11 @@ public enum ChunkAction
 {
     NONE,
     CREATE,
-    LOAD,
-    SETUP,
-    LIGHT_PREPARE,
-    LIGHT_SMOOTH,
-    BUILD,
     ATTACH,
     DETACH,
+    
+    CHANGE_STAGE,
+    NFY_STAGE_CHANGED,
 
     REQ_VOX,
     RES_VOX,
@@ -25,6 +23,16 @@ public class ChunkMessage
     public readonly ChunkAction action;
 
     public ChunkMessage(Vec3 pos, ChunkAction action) { this.pos = pos; this.action = action; }
+}
+
+public class ChunkChangeStageMessage : ChunkMessage
+{
+    public readonly ChunkStage stage;
+
+    public ChunkChangeStageMessage(Vec3 pos, ChunkStage stage) : base(pos, ChunkAction.CHANGE_STAGE)
+    {
+        this.stage = stage;
+    }
 }
 
 public class ChunkAttachMessage : ChunkMessage
@@ -97,5 +105,15 @@ public class ChunkResSunlightMessage : ChunkToChunkMessage
     public ChunkResSunlightMessage(ChunkReqSunlightMessage req, byte[,] data) : base(req.target, ChunkAction.RES_SUNLIGHT, req.pos)
     {
         this.data = data;
+    }
+}
+
+public class ChunkNotifyStageChanged : ChunkToChunkMessage
+{
+    public readonly ChunkStage stage;
+
+    public ChunkNotifyStageChanged(Vec3 pos, Vec3 target, ChunkStage stage) : base(pos, ChunkAction.NFY_STAGE_CHANGED, target)
+    {
+        this.stage = stage;
     }
 }

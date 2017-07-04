@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 
 public static class MakeSomeNoise
 {
-    private static readonly OpenSimplexNoise _noise = new OpenSimplexNoise("MAKE SOME NOISE FORTALEZAAAA!!!!".GetHashCode());
+    private static readonly OpenSimplexNoise _noise = new OpenSimplexNoise("MAKE SOME NOISE FORTALEZAAAA!".GetHashCode());
 
     public static double Get(double x, double y, double z, double startFrequence, int octaves, double persistence)
     {

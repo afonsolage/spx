@@ -49,11 +49,11 @@ public class VoxelViewport : MonoBehaviour, IChunkMeshConsumer
 
         var area = new Vec3(voxelArea / 2);
 
-        for (int x = -area.x; x <= area.x; x++)
+        for (int x = -area.x; x < area.x; x++)
         {
-            for (int y = -area.y; y <= area.y; y++)
+            for (int y = -area.y; y < area.y; y++)
             {
-                for (int z = -area.z; z <= area.z; z++)
+                for (int z = -area.z; z < area.z; z++)
                 {
                     _controller.Post(new Vec3(x * Chunk.SIZE, y * Chunk.SIZE, z * Chunk.SIZE), ChunkAction.CREATE);
                 }

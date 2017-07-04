@@ -1,15 +1,26 @@
-﻿public class FacesMerger
+using System;
+
+public class ChunkMergeFacesStage : ChunkBaseStage
 {
     private static readonly int SIDE_COUNT = Voxel.ALL_SIDES.Length;
-    private ChunkBuffer buffer;
-    private MeshBuilder builder;
     private byte[] mergedSides;
 
-    public FacesMerger(ChunkBuffer buffer)
+    public ChunkMergeFacesStage(SharedData sharedData) : base(ChunkStage.MERGE_FACES, sharedData) { }
+
+    protected override void OnStart()
     {
-        this.buffer = buffer;
         this.mergedSides = new byte[Chunk.SIZE * Chunk.SIZE * Chunk.SIZE * SIDE_COUNT];
-        this.builder = new MeshBuilder();
+        var builder = new MeshBuilder();
+        MergeFrontFaces(builder);
+        MergeBackFaces(builder);
+        MergeTopFaces(builder);
+        MergeDownFaces(builder);
+        MergeRightFaces(builder);
+        MergeLeftFaces(builder);
+
+        _sharedData.controller.Post(new ChunkAttachMessage(_sharedData.pos, builder.PrebuildMesh()));
+
+        Finish();
     }
 
     private bool IsSideMerged(VoxRef v, byte side)
@@ -34,11 +45,11 @@
 	 * @param buffer
 	 *
 	 */
-    private void MergeFrontFaces()
+    private void MergeFrontFaces(MeshBuilder builder)
     {
         // Voxel and Neightbor Voxel
-        VoxRef v = new VoxRef(buffer);
-        VoxRef nv = new VoxRef(buffer);
+        VoxRef v = new VoxRef(_sharedData.buffer);
+        VoxRef nv = new VoxRef(_sharedData.buffer);
 
         // Merge origin x and y to keep track of merged face bounds.
         int ox, oy;
@@ -180,11 +191,11 @@
         }
     }
 
-    private void MergeBackFaces()
+    private void MergeBackFaces(MeshBuilder builder)
     {
         // Voxel and Neightbor Voxel
-        VoxRef v = new VoxRef(buffer);
-        VoxRef nv = new VoxRef(buffer);
+        VoxRef v = new VoxRef(_sharedData.buffer);
+        VoxRef nv = new VoxRef(_sharedData.buffer);
 
         // Merge origin x and y
         int ox, oy;
@@ -279,11 +290,11 @@
         }
     }
 
-    private void MergeTopFaces()
+    private void MergeTopFaces(MeshBuilder builder)
     {
         // Voxel and Neightbor Voxel
-        VoxRef v = new VoxRef(buffer);
-        VoxRef nv = new VoxRef(buffer);
+        VoxRef v = new VoxRef(_sharedData.buffer);
+        VoxRef nv = new VoxRef(_sharedData.buffer);
 
         // Merge origin x and y
         int ox, oz;
@@ -379,11 +390,11 @@
         }
     }
 
-    private void MergeDownFaces()
+    private void MergeDownFaces(MeshBuilder builder)
     {
         // Voxel and Neightbor Voxel
-        VoxRef v = new VoxRef(buffer);
-        VoxRef nv = new VoxRef(buffer);
+        VoxRef v = new VoxRef(_sharedData.buffer);
+        VoxRef nv = new VoxRef(_sharedData.buffer);
 
         // Merge origin x and y
         int ox, oz;
@@ -425,7 +436,7 @@
                         }
 
                         // Move to the next voxel on X axis.
-						if (!nv.TryTarget(++x, y, z) || IsSideMerged(nv, side) || !nv.IsVisible(side)
+                        if (!nv.TryTarget(++x, y, z) || IsSideMerged(nv, side) || !nv.IsVisible(side)
                                 || (nv.type != currentType))
                         {
                             --x; // Go back to previous voxel;
@@ -433,7 +444,7 @@
                         }
                     }
 
-					System.Array.Copy(VoxRef.V5(x, y, z), 0, vertices, 3, 3);
+                    System.Array.Copy(VoxRef.V5(x, y, z), 0, vertices, 3, 3);
                     while (!done)
                     {
                         if (z == Chunk.SIZE - 1)
@@ -476,11 +487,11 @@
         }
     }
 
-    private void MergeRightFaces()
+    private void MergeRightFaces(MeshBuilder builder)
     {
         // Voxel and Neightbor Voxel
-        VoxRef v = new VoxRef(buffer);
-        VoxRef nv = new VoxRef(buffer);
+        VoxRef v = new VoxRef(_sharedData.buffer);
+        VoxRef nv = new VoxRef(_sharedData.buffer);
 
         // Merge origin x and y
         int oz, oy;
@@ -532,7 +543,7 @@
                         // v = nv; //Set current voxel as next one, so repeat the check until end.
                     }
 
-					System.Array.Copy(VoxRef.V5(x, y, z), 0, vertices, 3, 3);
+                    System.Array.Copy(VoxRef.V5(x, y, z), 0, vertices, 3, 3);
                     while (!done)
                     {
                         if (y == Chunk.SIZE - 1)
@@ -554,8 +565,8 @@
                         }
                     }
 
-					System.Array.Copy(VoxRef.V6(x, y, z), 0, vertices, 6, 3);
-					System.Array.Copy(VoxRef.V2(x, y, oz), 0, vertices, 9, 3);
+                    System.Array.Copy(VoxRef.V6(x, y, z), 0, vertices, 6, 3);
+                    System.Array.Copy(VoxRef.V2(x, y, oz), 0, vertices, 9, 3);
 
                     for (int a = oz; a >= z; a--)
                     {
@@ -575,11 +586,11 @@
         }
     }
 
-    private void MergeLeftFaces()
+    private void MergeLeftFaces(MeshBuilder builder)
     {
         // Voxel and Neightbor Voxel
-        VoxRef v = new VoxRef(buffer);
-        VoxRef nv = new VoxRef(buffer);
+        VoxRef v = new VoxRef(_sharedData.buffer);
+        VoxRef nv = new VoxRef(_sharedData.buffer);
 
         // Merge origin x and y
         int oz, oy;
@@ -630,7 +641,7 @@
                         // v = nv; //Set current voxel as next one, so repeat the check until end.
                     }
 
-					System.Array.Copy(VoxRef.V0(x, y, z), 0, vertices, 3, 3);
+                    System.Array.Copy(VoxRef.V0(x, y, z), 0, vertices, 3, 3);
                     while (!done)
                     {
                         if (y == Chunk.SIZE - 1)
@@ -652,8 +663,8 @@
                         }
                     }
 
-					System.Array.Copy(VoxRef.V3(x, y, z), 0, vertices, 6, 3);
-					System.Array.Copy(VoxRef.V7(x, y, oz), 0, vertices, 9, 3);
+                    System.Array.Copy(VoxRef.V3(x, y, z), 0, vertices, 6, 3);
+                    System.Array.Copy(VoxRef.V7(x, y, oz), 0, vertices, 9, 3);
 
                     for (int a = oz; a <= z; a++)
                     {
@@ -672,18 +683,4 @@
             }
         }
     }
-
-
-    public MeshBuilder Merge()
-    {
-        MergeFrontFaces();
-        MergeBackFaces();
-		MergeTopFaces();
-		MergeDownFaces();
-		MergeRightFaces();
-		MergeLeftFaces();
-
-        return builder;
-    }
-
 }
