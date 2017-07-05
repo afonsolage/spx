@@ -26,6 +26,12 @@ public class ChunkVisibilityStage : ChunkBaseStage
 
     protected override void OnStart()
     {
+        if (_sharedData.voxelCount == 0) 
+        {
+            Finish();
+            return;
+        }
+
         VoxRef voxRef = new VoxRef(_sharedData.buffer);
         VoxRef ngborVoxRef = new VoxRef(_sharedData.buffer);
 

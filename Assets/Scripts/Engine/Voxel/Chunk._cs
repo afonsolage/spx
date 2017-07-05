@@ -32,27 +32,21 @@ public class VoxCallback
         | +------>  | DONE | // The final stage of Chunk. Means there is nothing left to do.
         |           +------+
         V     
-    +----------------+
-    | PRE_VISIBILITY | // Get the type of all neighbor voxels, including ones from another chunks. This information is needed to next stage (VISIBILITY).
-    +----------------+
-        |
-        |
-        V
     +------------+
     | VISIBILITY | // Checks if the voxel is surrounded by transparent voxels and set the visibility of each side of voxel
     +------------+
         |
         |
         V
-    +-------------+
-    | MERGE_FACES | // Merges all visible faces which shares the same light (smoothed) and type
-    +-------------+
+    +----------+
+    | SUNLIGHT | // Propagate the sunlight downwards with maxium value until reach a solid voxel.
+    +----------+
         |
         |
         V
-    +-------+
-    | BUILD | // Build chunk mesh to be rendered
-    +-------+
+    +-------------+
+    | MERGE_FACES | // Merges all visible faces which shares the same light (smoothed) and type
+    +-------------+
         |
         |
         V
@@ -64,11 +58,6 @@ public class VoxCallback
     +--------------+
     | PRE_SUNLIGHT | // Get the sunlight value comming from the upper chunk. If there is none chunk, then this one must receive sunlight directly 
     +--------------+
-        |
-        V
-    +----------+
-    | SUNLIGHT | // Propagate the sunlight downwards with maxium value until reach a solid voxel.
-    +----------+
         |
         V
     +------------------+

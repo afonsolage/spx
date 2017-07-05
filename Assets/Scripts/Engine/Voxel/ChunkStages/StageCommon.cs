@@ -54,6 +54,7 @@ public enum ChunkStage
     INITIALIZE,
     LOAD,
     VISIBILITY,
+    SUNLIGHT,
     MERGE_FACES,
     DONE,
 }
@@ -79,7 +80,7 @@ public abstract class ChunkBaseStage
         OnStart();
     }
 
-    public virtual void Dispatch(ChunkMessage msg) { Debug.LogError("Unespected message received: " + msg.action); }
+    public virtual void Dispatch(ChunkMessage msg) { Debug.LogError("Unexpected message received: " + msg.action); }
     protected abstract void OnStart();
 
     protected void Finish()
@@ -104,7 +105,7 @@ public class SharedData
 {
     public readonly ChunkBuffer buffer;
     public readonly Vec3 pos;
-    public int vertexCount;
+    public int voxelCount;
     public ChunkController controller;
 
     public SharedData(ChunkController controller, ChunkBuffer buffer, Vec3 pos)
@@ -192,6 +193,8 @@ public class ChunkStageSwitcher
                 return new ChunkLoadStage(sharedData);
             case ChunkStage.VISIBILITY:
                 return new ChunkVisibilityStage(sharedData);
+            case ChunkStage.SUNLIGHT:
+                return new ChunkSunlightStage(sharedData);
             case ChunkStage.MERGE_FACES:
                 return new ChunkMergeFacesStage(sharedData);
             case ChunkStage.DONE:

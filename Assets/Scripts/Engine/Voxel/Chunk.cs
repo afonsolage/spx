@@ -24,7 +24,7 @@ public class Chunk
 
     public bool IsEmpty()
     {
-        return _data.vertexCount == 0; // TODO: Check this.
+        return _data.voxelCount == 0;
     }
 
     public void Dispatch(ChunkMessage msg)

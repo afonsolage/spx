@@ -100,14 +100,27 @@ public class ChunkRunner
     }
 }
 
+public class ChunkBounds
+{
+    public Vec3 up;
+    public Vec3 bottom;
+
+    public ChunkBounds(Vec3 bottom, Vec3 up)
+    {
+        this.bottom = bottom;
+        this.up = up;
+    }
+}
+
 public class ChunkController
 {
-    private static readonly int PARALLEL_RUNNERS = 8;
+    private static readonly int PARALLEL_RUNNERS = 4;
 
     private Thread _mainThread;
     private BlockingCollection<ChunkMessage> _queue;
     private ChunkRunner[] _runners;
     private ManualResetEventSlim _runnerEvent;
+    private ChunkBounds _bounds;
 
     private WeakReference _consumer;
     private ChunkMap _map;
@@ -124,9 +137,11 @@ public class ChunkController
         _runnerEvent = new ManualResetEventSlim(false);
     }
 
-    public void Start()
+    public void Start(Vec3 bounds)
     {
-        Debug.Log("Starting ChunkController thread.");
+        _bounds = new ChunkBounds(-bounds, bounds);
+
+        Debug.Log("Starting ChunkController thread with bounds: " + _bounds.bottom + " - " + _bounds.up);
         _running = true;
         _map = new ChunkMap();
 
@@ -136,8 +151,21 @@ public class ChunkController
             _runners[i].Start();
         }
 
+        for (int x = _bounds.bottom.x; x <= _bounds.up.x; x++)
+        {
+            for (int y = _bounds.bottom.y; y <= _bounds.up.y; y++)
+            {
+                for (int z = _bounds.bottom.z; z <= _bounds.up.z; z++)
+                {
+                    Post(new Vec3(x * Chunk.SIZE, y * Chunk.SIZE, z * Chunk.SIZE), ChunkAction.CREATE);
+                }
+            }
+        }
+
         _mainThread.Start();
     }
+
+    public ChunkBounds bounds { get { return _bounds; } }
 
     public bool IsAlive()
     {

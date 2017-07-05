@@ -22,7 +22,7 @@ public class ChunkLoadStage : ChunkBaseStage
                     voxRef.type = 1; // TODO: Add types
 
                     //If there is at least on block on this chunk, then itsn't empty.
-                    _sharedData.vertexCount++;
+                    _sharedData.voxelCount++;
                 }
             }
         }

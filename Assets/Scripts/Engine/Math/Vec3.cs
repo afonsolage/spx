@@ -38,7 +38,7 @@ public class Vec3
         RIGHT_UP, RIGHT_UP_FORWARD, RIGHT_UP_BACKWARD, RIGHT_BOTTOM_FORWARD, RIGHT_BOTTOM, RIGHT_BOTTOM_BACKWARD,
         LEFT, LEFT_FORWARD, LEFT_BACKWARD, LEFT_UP_FORWARD, LEFT_UP, LEFT_UP_BACKWARD, LEFT_BOTTOM_FORWARD, LEFT_BOTTOM,
         LEFT_BOTTOM_BACKWARD, UP, UP_FORWARD, UP_BACKWARD, BOTTOM, BOTTOM_FORWARD, BOTTOM_BACKWARD };
-    
+
     public readonly int x;
     public readonly int y;
     public readonly int z;
@@ -132,6 +132,16 @@ public class Vec3
     public static Vec3 operator /(Vec3 lhs, int val)
     {
         return new Vec3(lhs.x / val, lhs.y / val, lhs.z / val);
+    }
+
+    public static Vec3 operator -(Vec3 lhs, int val)
+    {
+        return new Vec3(lhs.x - val, lhs.y - val, lhs.z - val);
+    }
+
+    public static Vec3 operator -(Vec3 lhs)
+    {
+        return new Vec3(-lhs.x, -lhs.y, -lhs.z);
     }
 
     public override string ToString()

@@ -6,15 +6,15 @@ public enum ChunkAction
     CREATE,
     ATTACH,
     DETACH,
-    
+
     CHANGE_STAGE,
     NFY_STAGE_CHANGED,
 
     REQ_VOX,
     RES_VOX,
 
-    REQ_SUNLIGHT,
-    RES_SUNLIGHT,
+    SUNLIGHT_PROP,
+    SUNLIGHT_PROP_END,
 }
 
 public class ChunkMessage
@@ -89,25 +89,6 @@ public class ChunkResVoxMessage : ChunkToChunkMessage
     }
 }
 
-public class ChunkReqSunlightMessage : ChunkToChunkMessage
-{
-    public ChunkReqSunlightMessage(Vec3 pos, Vec3 target) : base(pos, ChunkAction.REQ_SUNLIGHT, target) { }
-
-    public override ChunkMessage ToChunkNotFoundMessage()
-    {
-        return new ChunkResSunlightMessage(this, null);
-    } 
-}
-
-public class ChunkResSunlightMessage : ChunkToChunkMessage
-{
-    public readonly byte[,] data;
-    public ChunkResSunlightMessage(ChunkReqSunlightMessage req, byte[,] data) : base(req.target, ChunkAction.RES_SUNLIGHT, req.pos)
-    {
-        this.data = data;
-    }
-}
-
 public class ChunkNotifyStageChanged : ChunkToChunkMessage
 {
     public readonly ChunkStage stage;
@@ -115,5 +96,20 @@ public class ChunkNotifyStageChanged : ChunkToChunkMessage
     public ChunkNotifyStageChanged(Vec3 pos, Vec3 target, ChunkStage stage) : base(pos, ChunkAction.NFY_STAGE_CHANGED, target)
     {
         this.stage = stage;
+    }
+}
+
+public class ChunkSunlightPropagationEndMessage : ChunkToChunkMessage
+{
+    public ChunkSunlightPropagationEndMessage(Vec3 pos, Vec3 target) : base(pos, ChunkAction.SUNLIGHT_PROP_END, target) { }
+}
+
+public class ChunkSunlightPropagationMessage : ChunkToChunkMessage
+{
+    public readonly List<Vec3> voxels;
+
+    public ChunkSunlightPropagationMessage(Vec3 pos, Vec3 target, List<Vec3> voxels) : base(pos, ChunkAction.SUNLIGHT_PROP, target) 
+    { 
+        this.voxels = voxels;
     }
 }
