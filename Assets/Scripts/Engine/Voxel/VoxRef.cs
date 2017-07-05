@@ -241,9 +241,9 @@ public class VoxRef
         return type == Voxel.VT_EMPTY;
     }
 
-    public Vec3 SideDir(byte side)
+    public Vec3 SideNeighbor(byte side)
     {
-        return SIDES_NORMALS[side];
+        return pos + SIDES_NORMALS[side];
     }
 
     public VoxSnap Snapshot()

@@ -3,9 +3,14 @@ using System;
 public class ChunkMergeFacesStage : ChunkBaseStage
 {
     private static readonly int SIDE_COUNT = Voxel.ALL_SIDES.Length;
-    private byte[] mergedSides;
 
-    public ChunkMergeFacesStage(SharedData sharedData) : base(ChunkStage.MERGE_FACES, sharedData) { }
+    private byte[] mergedSides;
+    private object input;
+
+    public ChunkMergeFacesStage(SharedData sharedData, object input) : base(ChunkStage.MERGE_FACES, sharedData) 
+    { 
+        this.input = input;
+    }
 
     protected override void OnStart()
     {

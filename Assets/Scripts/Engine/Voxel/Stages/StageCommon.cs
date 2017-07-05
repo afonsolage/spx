@@ -55,6 +55,7 @@ public enum ChunkStage
     LOAD,
     VISIBILITY,
     SUNLIGHT,
+    LIGHTING,
     MERGE_FACES,
     DONE,
 }
@@ -65,16 +66,18 @@ public abstract class ChunkBaseStage
 
     protected bool _finished;
     protected readonly SharedData _sharedData;
+    protected object _output;
 
     public ChunkBaseStage(ChunkStage stage, SharedData sharedData)
     {
         this.stage = stage;
-        this._finished = false;
-        this._sharedData = sharedData;
+        _finished = false;
+        _sharedData = sharedData;
     }
 
     public bool finished { get { return _finished; } }
     public bool done { get { return stage == ChunkStage.DONE; } }
+    public object output { get { return _output; } }
     public void Start()
     {
         OnStart();
@@ -196,7 +199,7 @@ public class ChunkStageSwitcher
             case ChunkStage.SUNLIGHT:
                 return new ChunkSunlightStage(sharedData);
             case ChunkStage.MERGE_FACES:
-                return new ChunkMergeFacesStage(sharedData);
+                return new ChunkMergeFacesStage(sharedData, _current.output);
             case ChunkStage.DONE:
                 return new ChunkDoneStage(sharedData);
             default:

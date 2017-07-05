@@ -49,7 +49,7 @@ public class ChunkVisibilityStage : ChunkBaseStage
 
                     foreach (byte side in Voxel.ALL_SIDES)
                     {
-                        var neighborPos = voxRef.SideDir(side) + voxRef.GetPos();
+                        var neighborPos = voxRef.SideNeighbor(side);
 
                         if (ngborVoxRef.TryTarget(neighborPos))
                         {
