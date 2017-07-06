@@ -2,29 +2,29 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+public class ChunkLightData
+{
+    public readonly Vec3 voxel;
+    public readonly float[][] vertexLight;
+
+    public ChunkLightData(Vec3 voxel)
+    {
+        this.voxel = voxel;
+        this.vertexLight = new float[Voxel.ALL_SIDES.Length][];
+    }
+}
+
 public class ChunkLightingStage : ChunkBaseStage
 {
-    class VertexLighting
-    {
-        public byte[] sidesLighting;
-        public byte[] neighborLighting;
-        public float[][] lighting;
-
-        public VertexLighting(byte[] sidesLighting)
-        {
-            this.sidesLighting = sidesLighting;
-        }
-    }
-
     class NeighborReq
     {
-        public readonly byte[] sideLighting;
-        public readonly byte side;
+        public readonly byte[] neighborLighting;
+        public readonly int side;
         public readonly Vec3 neighbor;
 
-        public NeighborReq(byte[] sideLighting, Vec3 neighbor, byte side)
+        public NeighborReq(byte[] neighborLighting, Vec3 neighbor, int side)
         {
-            this.sideLighting = sideLighting;
+            this.neighborLighting = neighborLighting;
             this.neighbor = neighbor;
             this.side = side;
         }
@@ -32,142 +32,64 @@ public class ChunkLightingStage : ChunkBaseStage
 
     private static readonly byte INVALID_LIGHTING = 255;
 
-    private static readonly Vec3[] CORNERS_DIR = {
-        /*
-		-               +-------++-------++-----+
-		-             /   8   //  5    //  2   /|
-		-            +-------++-------++------+ |
-		-          /   7   //   4   //   1   /| +
-		-         +-------++-------++-------+ |/+
-		-       /   6   //    3   //   0   /| +/|
-		-       +-------++-------++-------+ |/+ |
-		-       |       ||       ||       | +/| +
-		-       |       ||       ||       |/+ |/+
-		-       +-------++-------++-------+/| +/|
-		-       +-------++-------++-------+ |/+ |
-		-       |       ||       ||       | |/| +
-		-       |       ||       ||       |/+ |/ 
-		-       +-------++-------++-------+/| +
-		-       +-------++-------++-------+ |/ 
-		-       |       ||       ||       | +  
-		-       |       ||       ||       |/ 
-		-       +-------++-------++-------+
-		- Y
-		- | 
-		- | 
-		- |
-		- +------ X
-		-  \
-		-   \
-		-    Z
-        */
-        //0                     1               2
-        Vec3.RIGHT_UP_FORWARD,  Vec3.RIGHT_UP,  Vec3.RIGHT_UP_BACKWARD,
-        //3                                     4
-        Vec3.UP_FORWARD,                        Vec3.UP_BACKWARD,
-        //5                     6               7
-        Vec3.LEFT_UP_FORWARD,   Vec3.LEFT_UP,   Vec3.LEFT_UP_BACKWARD,
-
-        /*
-		-               +-------++-------++-----+
-		-             /       //        //     /|
-		-            +-------++-------++------+ |
-		-          /       //        //      /| +
-		-         +-------++-------++-------+ |/
-		-        /       //       //       /| +
-		-       +-------++-------++-------+ |/
-		-       |       ||       ||       | +
-		-       |       ||       ||       |/
-		-       +-------++-------++-------+
-		-
-		-               +-------++-------++-----+
-		-             /  16    //  13   // 11  /|
-		-            +-------++-------++------+ |
-		-          /   15  / ||       /  10  /| +
-		-         +-------++-------++-------+ |/+
-		-        /  14   //  12   //   9   /| +/|
-		-       +-------++-------++-------+ |/+ |
-		-       |       ||       ||       | +/| +
-		-       |       ||       ||       |/+ |/
-		-       +-------++-------++-------+/| +
-		-       +-------++-------++-------+ |/ 
-		-       |       ||       ||       | +  
-		-       |       ||       ||       |/ 
-		-       +-------++-------++-------+
-		- Y
-		- | 
-		- | 
-		- |
-		- +------ X
-		-  \
-		-   \
-		-    Z
-		*/
-        //8                 9
-        Vec3.RIGHT_FORWARD, Vec3.RIGHT_BACKWARD,
-        //10                11
-        Vec3.LEFT_FORWARD,  Vec3.LEFT_BACKWARD,
-
-        /*
-		-               +-------++-------++-----+
-		-             /        //       //     /|
-		-            +-------++-------++------+ |
-		-          /       //        //      /| +
-		-         +-------++-------++-------+ |/+
-		-        /       //       //       /| +/|
-		-       +-------++-------++-------+ |/+ |
-		-       |       ||       ||       | +/| +
-		-       |       ||       ||       |/+ |/
-		-       +-------++-------++-------+/| +
-		-       +-------++-------++-------+ |/ 
-		-       |       ||       ||       | +  
-		-       |       ||       ||       |/ 
-		-       +-------++-------++-------+
-		-
-		-               +-------++-------++-----+
-		-             /  25   //   22   // 19  /|
-		-            +-------++-------++------+ |
-		-          /   24  //   21   // 18   /| +
-		-         +-------++-------++-------+ |/
-		-        /  23   //  20   //  17   /| +
-		-       +-------++-------++-------+ |/
-		-       |       ||       ||       | +
-		-       |       ||       ||       |/
-		-       +-------++-------++-------+
-		- Y
-		- | 
-		- | 
-		- |
-		- +------ X
-		-  \
-		-   \
-		-    Z
-		*/
-
-        //12                        13                  14
-        Vec3.RIGHT_BOTTOM_FORWARD,  Vec3.RIGHT_BOTTOM,  Vec3.RIGHT_BOTTOM_BACKWARD,
-        //15                                            16
-        Vec3.BOTTOM_FORWARD,                            Vec3.BOTTOM_BACKWARD,
-        //17                        18                  19
-        Vec3.LEFT_BOTTOM_FORWARD,   Vec3.LEFT_BOTTOM,   Vec3.LEFT_BOTTOM_BACKWARD,
-    };
-
+    /*
+        -               +-------++-------++-----+
+        -             /   8   //  5    //  2   /|
+        -            +-------++-------++------+ |
+        -          /   7   //   4   //   1   /| +
+        -         +-------++-------++-------+ |/+
+        -       /   6   //    3   //   0   /| +
+        -       +-------++-------++-------+ |/
+        -       |       ||       ||       | +
+        -       |       ||       ||       |/
+        -       +-------++-------++-------+
+        -               +-------++-------++-----+
+        -             /  16    //  13   // 11  /|
+        -            +-------++-------++------+ |
+        -          /   15  / ||       /  10  /| +
+        -         +-------++-------++-------+ |/
+        -        /  14   //  12   //   9   /| +
+        -       +-------++-------++-------+ |/ 
+        -       |       ||       ||       | +
+        -       |       ||       ||       |/ 
+        -       +-------++-------++-------+ 
+        -               +-------++-------++-----+
+        -             /  25   //   22   // 19  /|
+        -            +-------++-------++------+ |
+        -          /   24  //   21   // 18   /| +
+        -         +-------++-------++-------+ |/
+        -        /  23   //  20   //  17   /| +
+        -       +-------++-------++-------+ |/
+        -       |       ||       ||       | +
+        -       |       ||       ||       |/
+        -       +-------++-------++-------+
+        Y
+        | 
+        | 
+        |
+        +------X
+       /
+      /
+     Z
+     
+    */
     private static readonly int[,,] CORNERS =
     {
-        {{15, 10, 17}, {15,  8, 12}, { 3,  8,  0}, { 3, 10,  5}}, //Front
-        {{13,  8, 12}, {13,  9, 14}, { 1,  9,  2}, { 1,  8,  0}}, //Right
-        {{16,  9, 14}, {16, 11, 19}, { 4, 11,  7}, { 4,  9,  2}}, //Back
-        {{18, 11, 19}, {18, 10, 17}, { 6, 10,  5}, { 6, 11,  7}}, //Left
-        {{ 3,  6,  5}, { 3,  1,  0}, { 4,  1,  2}, { 4,  6,  7}}, //Top
-        {{16, 18, 19}, {16, 13, 14}, {15, 13, 12}, {15, 18, 17}}, //Down
+        {{20, 14, 23}, {20,  9, 17}, { 3,  9,  0}, { 3, 14,  6}}, //Front
+        {{18,  9, 17}, {18, 11, 19}, { 1, 11,  2}, { 1,  9,  0}}, //Right
+        {{22, 11, 19}, {22, 16, 25}, { 5, 16,  8}, { 5, 11,  2}}, //Back
+        {{24, 16, 25}, {24, 14, 23}, { 7, 14,  6}, { 7, 16,  8}}, //Left
+        {{ 3,  7,  6}, { 3,  1,  0}, { 5,  1,  2}, { 5,  7,  8}}, //Top
+        {{22, 24, 25}, {22, 18, 19}, {20, 18, 17}, {20, 24, 23}}, //Down
     };
+    private static readonly int[] SIDES = { 12, 10, 13, 15, 4, 21 };
 
-    private VertexLighting[,,] _verticesLightings;
+    private byte[,,][] _verticesLightings;
     Dictionary<Vec3, List<NeighborReq>> _requests = new Dictionary<Vec3, List<NeighborReq>>();
 
     public ChunkLightingStage(SharedData sharedData) : base(ChunkStage.LIGHTING, sharedData)
     {
-        _verticesLightings = new VertexLighting[Chunk.SIZE, Chunk.SIZE, Chunk.SIZE];
+        _verticesLightings = new byte[Chunk.SIZE, Chunk.SIZE, Chunk.SIZE][];
     }
 
     protected override void OnStart()
@@ -186,35 +108,48 @@ public class ChunkLightingStage : ChunkBaseStage
                     if (vox.IsEmpty())
                         continue;
 
-                    var sideLighting = new byte[Voxel.ALL_SIDES.Length];
-                    foreach (byte side in Voxel.ALL_SIDES)
+                    var pos = vox.GetPos();
+                    var neighborLighting = new byte[Vec3.ALL_DIRS.Length];
+
+                    for (int i = 0; i < Vec3.ALL_DIRS.Length; i++)
                     {
-                        if (!vox.IsVisible(side))
+                        var dir = Vec3.ALL_DIRS[i];
+
+                        //If this is a Unit Direction (FORWARD, RIGHT, BACKWARD, LEFT, UP, BOTTOM)
+                        if (dir.IsUnit())
                         {
-                            sideLighting[side] = INVALID_LIGHTING;
-                            continue;
+                            byte side = (byte)Array.IndexOf(SIDES, i); //Get it's corresponding side
+                            if (!vox.IsVisible(side))
+                            {
+                                //We don't need to check for neighbor if it isn't visible.
+                                neighborLighting[i] = INVALID_LIGHTING;
+                                continue;
+                            }
                         }
 
-                        var ngborPos = vox.SideNeighbor(side);
+                        var ngborPos = pos + dir;
 
                         if (ngborVox.TryTarget(ngborPos))
                         {
-                            sideLighting[side] = ngborVox.IsEmpty() ? INVALID_LIGHTING : ngborVox.light;
+                            neighborLighting[i] = ngborVox.IsEmpty() ? INVALID_LIGHTING : ngborVox.light;
                         }
                         else
                         {
-                            var ngborChunk = _sharedData.pos + Vec3.ALL_UNIT_DIRS[side] * Chunk.SIZE;
+                            var ngborChunk = _sharedData.pos + dir * Chunk.SIZE;
                             ngborPos %= Chunk.SIZE;
-                            AddRequestChunkVoxel(sideLighting, ngborChunk, ngborPos, side);
+                            AddRequestChunkVoxel(neighborLighting, ngborChunk, ngborPos, i);
                         }
                     }
 
-                    SetSidesLighting(x, y, z, sideLighting);
+                    _verticesLightings[x, y, z] = neighborLighting;
                 }
             }
         }
 
-        SendRequest();
+        if(_requests.Count > 0)
+            SendRequest();
+        else
+            Finish();
     }
 
     public override void Dispatch(ChunkMessage msg)
@@ -230,7 +165,7 @@ public class ChunkLightingStage : ChunkBaseStage
         }
     }
 
-    private void AddRequestChunkVoxel(byte[] sideLighting, Vec3 targetChunk, Vec3 targetVox, byte side)
+    private void AddRequestChunkVoxel(byte[] neighborLighting, Vec3 targetChunk, Vec3 targetVox, int side)
     {
         List<NeighborReq> list;
         if (!_requests.TryGetValue(targetChunk, out list))
@@ -238,7 +173,7 @@ public class ChunkLightingStage : ChunkBaseStage
             list = new List<NeighborReq>();
             _requests[targetChunk] = list;
         }
-        list.Add(new NeighborReq(sideLighting, targetVox, side));
+        list.Add(new NeighborReq(neighborLighting, targetVox, side));
     }
 
     private void SendRequest()
@@ -267,7 +202,7 @@ public class ChunkLightingStage : ChunkBaseStage
             //If the list was null, this means the chunk doesn't exists or is empty, so set lighting to invalid.
             foreach (NeighborReq req in list)
             {
-                req.sideLighting[req.side] = INVALID_LIGHTING;
+                req.neighborLighting[req.side] = INVALID_LIGHTING;
             }
         }
         else
@@ -276,7 +211,7 @@ public class ChunkLightingStage : ChunkBaseStage
             {
                 NeighborReq req = list.Find((r) => r.neighbor == pair.Key);
 
-                req.sideLighting[req.side] = pair.Value?.light ?? INVALID_LIGHTING;
+                req.neighborLighting[req.side] = pair.Value?.light ?? INVALID_LIGHTING;
             }
         }
 
@@ -287,52 +222,48 @@ public class ChunkLightingStage : ChunkBaseStage
         }
     }
 
-    private void SetSidesLighting(int x, int y, int z, byte[] data)
-    {
-        _verticesLightings[x, y, z] = new VertexLighting(data);
-    }
-
-    private void SetNeighborLighting(int x, int y, int z, byte[] neighborLighting)
-    {
-        _verticesLightings[x, y, z].neighborLighting = neighborLighting;
-    }
-
     private void ComputeSmoothLighting()
     {
+        //Each voxel has 6 sides and 4 vertex.
+        List<ChunkLightData> vertLights = new List<ChunkLightData>(_sharedData.voxelCount * 6);
+
         for (int x = 0; x < Chunk.SIZE; x++)
         {
             for (int y = 0; y < Chunk.SIZE; y++)
             {
                 for (int z = 0; z < Chunk.SIZE; z++)
                 {
-                    var vert = _verticesLightings[x, y, z];
+                    var verts = _verticesLightings[x, y, z];
 
-                    if (vert == null)
+                    if (verts == null)
                         continue;
 
-                    vert.lighting = new float[Voxel.ALL_SIDES.Length][];
-
+                    var data = new ChunkLightData(new Vec3(x, y, z));
                     foreach (byte side in Voxel.ALL_SIDES)
                     {
-                        if (vert.sidesLighting[side] == INVALID_LIGHTING)
+                        int sideIdx = SIDES[side];
+
+                        if (verts[sideIdx] == INVALID_LIGHTING)
                             continue;
 
                         float[] vertices = new float[4];
 
                         for (int i = 0; i < 4; i++)
                         {
-                            vertices[i] = AmbientOcclusion(vert.sidesLighting[side], vert.neighborLighting[CORNERS[side, i, 0]], vert.neighborLighting[CORNERS[side, i, 1]], vert.neighborLighting[CORNERS[side, i, 2]]);
+                            vertices[i] = AmbientOcclusion(verts[sideIdx], verts[CORNERS[side, i, 0]], verts[CORNERS[side, i, 1]], verts[CORNERS[side, i, 2]]);
                         }
 
-                        vert.lighting[side] = vertices;
+                        data.vertexLight[side] = vertices;
                     }
+                    vertLights.Add(data);
 
-                    //At this point, we don't need those infos anymore.
-                    vert.sidesLighting = null;
-                    vert.neighborLighting = null;
+                    //For debug, to ensure there is no sharing reference.
+                    _verticesLightings[x, y, z] = null;
                 }
             }
         }
+
+        this._output = vertLights;
     }
 
     /**

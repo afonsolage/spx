@@ -34,10 +34,11 @@ public class Vec3
     public static readonly Vec3 BOTTOM_BACKWARD = new Vec3(0, -1, -1);
 
     public static readonly Vec3[] ALL_UNIT_DIRS = new Vec3[] { FORWARD, RIGHT, BACKWARD, LEFT, UP, BOTTOM };
-    public static readonly Vec3[] ALL_DIRS = new Vec3[] { FORWARD, BACKWARD, RIGHT, RIGHT_FORWARD, RIGHT_BACKWARD,
-        RIGHT_UP, RIGHT_UP_FORWARD, RIGHT_UP_BACKWARD, RIGHT_BOTTOM_FORWARD, RIGHT_BOTTOM, RIGHT_BOTTOM_BACKWARD,
-        LEFT, LEFT_FORWARD, LEFT_BACKWARD, LEFT_UP_FORWARD, LEFT_UP, LEFT_UP_BACKWARD, LEFT_BOTTOM_FORWARD, LEFT_BOTTOM,
-        LEFT_BOTTOM_BACKWARD, UP, UP_FORWARD, UP_BACKWARD, BOTTOM, BOTTOM_FORWARD, BOTTOM_BACKWARD };
+    public static readonly Vec3[] ALL_DIRS = new Vec3[] {
+        RIGHT_UP_FORWARD, RIGHT_UP, RIGHT_UP_BACKWARD, UP_FORWARD, UP, UP_BACKWARD, LEFT_UP_FORWARD, LEFT_UP, LEFT_UP_BACKWARD,
+        RIGHT_FORWARD, RIGHT, RIGHT_BACKWARD, FORWARD, BACKWARD, LEFT_FORWARD, LEFT, LEFT_BACKWARD,
+        RIGHT_BOTTOM_FORWARD, RIGHT_BOTTOM, RIGHT_BOTTOM_BACKWARD, BOTTOM_FORWARD, BOTTOM, BOTTOM_BACKWARD, LEFT_BOTTOM_FORWARD, LEFT_BOTTOM, LEFT_BOTTOM_BACKWARD,
+    };
 
     public readonly int x;
     public readonly int y;
@@ -103,6 +104,11 @@ public class Vec3
     public static Vec3 operator %(Vec3 lhs, Vec3 rhs)
     {
         return new Vec3(Calc.Mod(lhs.x, rhs.x), Calc.Mod(lhs.y, rhs.y), Calc.Mod(lhs.z, rhs.z));
+    }
+
+    internal bool IsUnit()
+    {
+        return Array.Exists(ALL_UNIT_DIRS, (d) => d == this);
     }
 
     public static bool operator ==(Vec3 lhs, Vec3 rhs)

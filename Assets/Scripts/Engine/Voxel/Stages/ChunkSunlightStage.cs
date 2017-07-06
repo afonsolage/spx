@@ -40,7 +40,7 @@ public class ChunkSunlightStage : ChunkBaseStage
         switch (msg.action)
         {
             case ChunkAction.SUNLIGHT_PROP:
-                AddToPropagationQueue(msg as ChunkSunlightPropagationMessage);
+                PropagateLightReceived(msg as ChunkSunlightPropagationMessage);
                 break;
             case ChunkAction.SUNLIGHT_PROP_END:
                 Finish();
@@ -51,7 +51,7 @@ public class ChunkSunlightStage : ChunkBaseStage
         }
     }
 
-    private void AddToPropagationQueue(ChunkSunlightPropagationMessage msg)
+    private void PropagateLightReceived(ChunkSunlightPropagationMessage msg)
     {
         msg.voxels.ForEach((v) => _propQueue.Enqueue(v));
 
@@ -84,7 +84,7 @@ public class ChunkSunlightStage : ChunkBaseStage
         // because no direct sunlight will reach there.
         if (propToBottomChunk.Count == 0)
         {
-            for (int y = _sharedData.pos.y - Chunk.SIZE, endY = _sharedData.controller.bounds.bottom.y; y >= endY; y -= Chunk.SIZE)
+            for (int y = _sharedData.pos.y - Chunk.SIZE, endY = _sharedData.controller.bounds.bottom.y * Chunk.SIZE; y >= endY; y -= Chunk.SIZE)
             {
                 _sharedData.controller.Post(new ChunkSunlightPropagationEndMessage(_sharedData.pos, new Vec3(_sharedData.pos.x, y, _sharedData.pos.z)));
             }

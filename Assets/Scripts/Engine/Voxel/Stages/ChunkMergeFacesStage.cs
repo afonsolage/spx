@@ -1,19 +1,28 @@
 using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 public class ChunkMergeFacesStage : ChunkBaseStage
 {
     private static readonly int SIDE_COUNT = Voxel.ALL_SIDES.Length;
 
     private byte[] mergedSides;
-    private object input;
+    //private List<ChunkLightData> lightData;
 
-    public ChunkMergeFacesStage(SharedData sharedData, object input) : base(ChunkStage.MERGE_FACES, sharedData) 
-    { 
-        this.input = input;
+    public ChunkMergeFacesStage(SharedData sharedData, object input) : base(ChunkStage.MERGE_FACES, sharedData)
+    {
+        //this.lightData = input as List<ChunkLightData>;
+        //Debug.Assert(_sharedData.voxelCount == 0 || (_sharedData.voxelCount > 0 && lightData == null));
     }
 
     protected override void OnStart()
     {
+        if (_sharedData.voxelCount == 0)
+        {
+            Done();
+            return;
+        }
+
         this.mergedSides = new byte[Chunk.SIZE * Chunk.SIZE * Chunk.SIZE * SIDE_COUNT];
         var builder = new MeshBuilder();
         MergeFrontFaces(builder);
@@ -24,6 +33,7 @@ public class ChunkMergeFacesStage : ChunkBaseStage
         MergeLeftFaces(builder);
 
         _sharedData.controller.Post(new ChunkAttachMessage(_sharedData.pos, builder.PrebuildMesh()));
+        
 
         Finish();
     }

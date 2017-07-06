@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ChunkCluster
@@ -62,25 +64,38 @@ public enum ChunkStage
 
 public abstract class ChunkBaseStage
 {
+#if UNITY_EDITOR
+    public static readonly int[] state_cnt = new int[(int)ChunkStage.DONE + 1];
+#endif
+
     public readonly ChunkStage stage;
 
     protected bool _finished;
+    protected bool _done;
     protected readonly SharedData _sharedData;
     protected object _output;
+    // protected readonly List<ChunkMessage> _storage;
 
     public ChunkBaseStage(ChunkStage stage, SharedData sharedData)
     {
         this.stage = stage;
         _finished = false;
         _sharedData = sharedData;
+        // _storage = new List<ChunkMessage>();
     }
 
     public bool finished { get { return _finished; } }
-    public bool done { get { return stage == ChunkStage.DONE; } }
+    public bool done { get { return _done; } }
     public object output { get { return _output; } }
     public void Start()
     {
+#if UNITY_EDITOR
+        System.Threading.Interlocked.Increment(ref state_cnt[(int)stage]);
+#endif
         OnStart();
+
+        // foreach (ChunkMessage msg in _storage)
+        //     Dispatch(msg);
     }
 
     public virtual void Dispatch(ChunkMessage msg) { Debug.LogError("Unexpected message received: " + msg.action); }
@@ -88,8 +103,23 @@ public abstract class ChunkBaseStage
 
     protected void Finish()
     {
+#if UNITY_EDITOR
+        if (!_finished)
+            System.Threading.Interlocked.Decrement(ref state_cnt[(int)stage]);
+#endif
         _finished = true;
     }
+
+    protected void Done()
+    {
+        Finish();
+        _done = true;
+    }
+
+    // protected void Store(ChunkMessage msg)
+    // {
+    //     _storage.Add(msg);
+    // }
 }
 
 public class ChunkNoneStage : ChunkBaseStage
@@ -101,7 +131,7 @@ public class ChunkNoneStage : ChunkBaseStage
 public class ChunkDoneStage : ChunkBaseStage
 {
     public ChunkDoneStage(SharedData sharedData) : base(ChunkStage.DONE, sharedData) { }
-    protected override void OnStart() { Finish(); }
+    protected override void OnStart() { Done(); }
 }
 
 public class SharedData
@@ -109,7 +139,7 @@ public class SharedData
     public readonly ChunkBuffer buffer;
     public readonly Vec3 pos;
     public int voxelCount;
-    public ChunkController controller;
+    public readonly ChunkController controller;
 
     public SharedData(ChunkController controller, ChunkBuffer buffer, Vec3 pos)
     {
@@ -167,8 +197,16 @@ public class ChunkStageSwitcher
             return;
         }
 
-        _current = GetNextStage(msg.stage, _sharedData);
-        _current.Start();
+        if (_current.done)
+        {
+            _current = new ChunkDoneStage(_sharedData);
+            _current.Start();
+        }
+        else
+        {
+            _current = GetNextStage(msg.stage, _sharedData);
+            _current.Start();
+        }
 
         BroadacstChunkStageChanged();
     }
@@ -183,7 +221,7 @@ public class ChunkStageSwitcher
 
     private bool CanChangeStage()
     {
-        return _current.finished && !_current.done && _cluster.CanChangeStage(_current.stage);
+        return _current.finished && _current.stage != ChunkStage.DONE && _cluster.CanChangeStage(_current.stage);
     }
 
     private ChunkBaseStage GetNextStage(ChunkStage newStage, SharedData sharedData)
@@ -198,6 +236,8 @@ public class ChunkStageSwitcher
                 return new ChunkVisibilityStage(sharedData);
             case ChunkStage.SUNLIGHT:
                 return new ChunkSunlightStage(sharedData);
+            case ChunkStage.LIGHTING:
+                return new ChunkLightingStage(sharedData);
             case ChunkStage.MERGE_FACES:
                 return new ChunkMergeFacesStage(sharedData, _current.output);
             case ChunkStage.DONE:

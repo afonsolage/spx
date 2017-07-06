@@ -241,6 +241,15 @@ public class ChunkController
             case ChunkAction.DETACH:
                 DetachChunk(msg.pos);
                 break;
+// #if UNITY_EDITOR
+//             case ChunkAction.CHANGE_STAGE:
+//                 SendToChunk(msg);
+//                 string output = "";
+//                 var i = 0;
+//                 Array.ForEach(ChunkBaseStage.state_cnt, (s) => output += (ChunkStage)(i++) + "[" + s + "] ");
+//                 Debug.Log(output);
+//                 break;
+// #endif
             default:
                 SendToChunk(msg);
                 break;
