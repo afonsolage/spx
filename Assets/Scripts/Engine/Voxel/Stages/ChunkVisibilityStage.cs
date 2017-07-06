@@ -26,7 +26,7 @@ public class ChunkVisibilityStage : ChunkBaseStage
 
     protected override void OnStart()
     {
-        if (_sharedData.voxelCount == 0) 
+        if (_sharedData.voxelCount == 0)
         {
             Finish();
             return;
@@ -110,11 +110,15 @@ public class ChunkVisibilityStage : ChunkBaseStage
         List<NeighborReq> list;
         if (!chunkRequests.TryGetValue(msg.pos, out list))
         {
-            Debug.Log("Failed to find a request to Chunk: " + msg.pos);
+            Debug.LogError("Failed to find a request to Chunk: " + msg.pos);
             return;
         }
 
-        chunkRequests.Remove(msg.pos);
+        if (!chunkRequests.Remove(msg.pos))
+        {
+            Debug.LogError("Failed to remove a request to Chunk: " + msg.pos);
+            return;
+        }
 
         VoxRef voxRef = new VoxRef(_sharedData.buffer);
 
@@ -138,6 +142,8 @@ public class ChunkVisibilityStage : ChunkBaseStage
         }
 
         if (chunkRequests.Count == 0)
+        {
             Finish();
+        }
     }
 }

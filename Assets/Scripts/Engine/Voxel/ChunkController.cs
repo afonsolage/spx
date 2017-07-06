@@ -25,7 +25,6 @@ public class ChunkRunner
     private Thread _thread;
     private bool _running;
     private BlockingCollection<RunnerTask> _tasks;
-    private Vec3 _currentChunk;
     private ManualResetEventSlim _event;
 
     public ChunkRunner(string name, ManualResetEventSlim evt)
@@ -34,7 +33,6 @@ public class ChunkRunner
         _thread = new Thread(Run);
         _thread.Name = name;
         _running = false;
-        _currentChunk = Vec3.ZERO;
         _event = evt;
     }
 
@@ -45,8 +43,15 @@ public class ChunkRunner
             try
             {
                 var task = _tasks.Take();
-                _currentChunk = task.chunk.pos;
+
+                if (task.chunk.running != null)
+                {
+                    Debug.LogError("Chunk " + task.chunk.pos + " already running on " + task.chunk.running + " but was set to run on + " + _thread.Name);
+                }
+
+                task.chunk.running = _thread.Name;
                 task.chunk.Dispatch(task.message);
+                task.chunk.running = null;
             }
             catch (ThreadAbortException)
             {
@@ -82,11 +87,6 @@ public class ChunkRunner
             _thread.Interrupt();
             _tasks.Dispose();
         }
-    }
-
-    public bool IsAlreadyRunning(Vec3 chunk)
-    {
-        return _currentChunk == chunk;
     }
 
     public bool IsFree()
@@ -241,15 +241,15 @@ public class ChunkController
             case ChunkAction.DETACH:
                 DetachChunk(msg.pos);
                 break;
-// #if UNITY_EDITOR
-//             case ChunkAction.CHANGE_STAGE:
-//                 SendToChunk(msg);
-//                 string output = "";
-//                 var i = 0;
-//                 Array.ForEach(ChunkBaseStage.state_cnt, (s) => output += (ChunkStage)(i++) + "[" + s + "] ");
-//                 Debug.Log(output);
-//                 break;
-// #endif
+            // #if UNITY_EDITOR
+            //             case ChunkAction.CHANGE_STAGE:
+            //                 SendToChunk(msg);
+            //                 string output = "";
+            //                 var i = 0;
+            //                 Array.ForEach(ChunkBaseStage.state_cnt, (s) => output += (ChunkStage)(i++) + "[" + s + "] ");
+            //                 Debug.Log(output);
+            //                 break;
+            // #endif
             default:
                 SendToChunk(msg);
                 break;
@@ -274,12 +274,6 @@ public class ChunkController
 
     private ChunkRunner GetRunner(Vec3 chunk)
     {
-        foreach (ChunkRunner runner in _runners)
-        {
-            if (runner.IsAlreadyRunning(chunk))
-                return runner;
-        }
-
         do
         {
             foreach (ChunkRunner runner in _runners)

@@ -103,9 +103,12 @@ public abstract class ChunkBaseStage
 
     protected void Finish()
     {
+        if (_finished)
+        {
+            Debug.LogError("Already finished.");
+        }
 #if UNITY_EDITOR
-        if (!_finished)
-            System.Threading.Interlocked.Decrement(ref state_cnt[(int)stage]);
+        System.Threading.Interlocked.Decrement(ref state_cnt[(int)stage]);
 #endif
         _finished = true;
     }

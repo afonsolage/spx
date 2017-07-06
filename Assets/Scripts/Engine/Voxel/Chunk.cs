@@ -11,6 +11,7 @@ public class Chunk
     private readonly ChunkStageSwitcher _switcher;
 
     private bool _empty;
+    public string running;
 
     public Chunk(ChunkController controller, Vec3 pos)
     {

@@ -39,6 +39,18 @@ public class VoxelViewport : MonoBehaviour, IChunkMeshConsumer
         _controller.Stop();
     }
 
+    public Dictionary<ChunkStage, int> GetChunkStageSnapshot()
+    {
+        var dic = new Dictionary<ChunkStage, int>();
+
+        for(int i = 0; i < ChunkBaseStage.state_cnt.Length; i++)
+        {
+            dic[(ChunkStage)i] = ChunkBaseStage.state_cnt[i];
+        }
+
+        return dic;
+    }
+
     public void Start()
     {
         name = "Voxel Viewport";
